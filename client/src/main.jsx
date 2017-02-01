@@ -21,6 +21,32 @@ const colorMap = {
 const TILE_HEIGHT = 102;
 const TILE_WIDTH = 102;
 
+const Reserves = React.createClass({
+  render: function() {
+    const gameState = this.props.gameState;
+    const clientState = this.props.clientState;
+    const playerState = gameState.players[gameState.currentPlayer];
+    const playerRace = playerState.race;
+    const color = colorMap[playerRace];
+
+    const tokens = playerState.tokens.map(function(count, value) {
+      const tokenStyle = {
+        left: 10 + value*150
+      };
+      const armyClassName = clientState.selectedTokenSize === value+1 ? "army selected" : "army";
+      const armyStyle = {
+        backgroundColor: color
+      };
+      return (<div className="unused-token" style={tokenStyle}>
+        <div className={armyClassName} style={armyStyle}><p>{value+1}</p></div>
+        <div className="army-count">x{count}</div>
+      </div>);
+    });
+
+    return <div className="player-area">{tokens}</div>;
+  }
+});
+
 const GameBoard = React.createClass({
   render: function() {
     const gameState = this.props.gameState;
@@ -84,4 +110,16 @@ const GameBoard = React.createClass({
 });
 
 const gameState = getGameState();
-ReactDom.render(<GameBoard gameState={gameState}/>, document.getElementById('content'));
+const clientState = {
+  selectedTokenSize: 1
+};
+const GetTheGold = React.createClass({
+  render: function() {
+    return (<div>
+      <GameBoard gameState={gameState} clientState={clientState}/>
+      <Reserves gameState={gameState} clientState={clientState}/>
+    </div>);
+  }
+});
+
+ReactDom.render(<GetTheGold/>, document.getElementById('content'));
