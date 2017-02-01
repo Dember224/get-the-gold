@@ -1,18 +1,6 @@
 const React = require('react');
 const ReactDom = require('react-dom');
 
-function getFromServer(url) {
-  const request = new XMLHttpRequest();
-  request.open("GET", url, false);
-  request.send(null);
-  let result = JSON.parse(request.responseText);
-  return result;
-}
-
-function getGameState() {
-  return getFromServer('gameState');
-}
-
 const colorMap = {
   elf: 'blue',
   wizard: 'white'
@@ -109,12 +97,24 @@ const GameBoard = React.createClass({
   }
 });
 
-const gameState = getGameState();
+function getFromServer(url) {
+  const request = new XMLHttpRequest();
+  request.open("GET", url, false);
+  request.send(null);
+  let result = JSON.parse(request.responseText);
+  return result;
+}
+
+function getGameState() {
+  return getFromServer('gameState');
+}
+
 const clientState = {
   selectedTokenSize: 1
 };
 const GetTheGold = React.createClass({
   render: function() {
+    const gameState = getGameState();
     return (<div>
       <GameBoard gameState={gameState} clientState={clientState}/>
       <Reserves gameState={gameState} clientState={clientState}/>
@@ -122,4 +122,11 @@ const GetTheGold = React.createClass({
   }
 });
 
-ReactDom.render(<GetTheGold/>, document.getElementById('content'));
+const webSocket = new WebSocket("ws://localhost:3000/communication");
+webSocket.onmessage = (event) => {
+   console.log("Received Message");
+};
+webSocket.onopen = (event) => {
+  console.log("Open");
+  ReactDom.render(<GetTheGold/>, document.getElementById('content'));
+};

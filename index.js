@@ -91,7 +91,7 @@ function getGameEngine() {
     },
     palisades: startingPalisades,
     tiles: startingTiles,
-    currentPlayer: 'player-1',
+    currentPlayer: 'player-2',
     currentState: STATE_NO_MOVE
   };
 
@@ -115,6 +115,7 @@ function getApp(gameEngine) {
   const path = require('path');
   const express = require('express');
   const app = express();
+  const expressWs = require('express-ws')(app);
 
   app.use(express.static('client/dist/static'));
 
@@ -126,16 +127,29 @@ function getApp(gameEngine) {
     response.send(JSON.stringify(gameEngine.getGameState(1)));
   });
 
-  app.get('/options', function(request, response) {
+  const openChannels = [];
+  app.ws('/communication', function(webSocket, request) {
+    openChannels.push({
+      webSocket: webSocket,
+      user: request.user
+    });
 
-  });
+    webSocket.on('message', function(serializedMessage) {
+      console.log("Handling: " + serializedMessage);
 
-  app.post('/token/:tile/:value', function(request, response) {
-    const id = request.params.id;
-  });
+      if(serializedMessage === 'initialize') {
+        webSocket.send('trigger');
+        console.log('triggered');
+        return;
+      }
 
-  app.post('/palisade/:a/:b', function(request, response) {
-    const id = request.params.id;
+      const message = JSON.parse(serializedMessage);
+      openChannels.forEach(function(channel) {channel.webSocket.send('reload-state');});
+
+      console.log("Broadcast Message");
+    });
+
+    webSocket.send('test-connection');
   });
 
   app.listen(3000, function () {
