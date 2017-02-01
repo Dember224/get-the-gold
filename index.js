@@ -81,7 +81,7 @@ function getGameEngine() {
   var gameState = {
     players: {
       'player-1': {
-        race: 'human',
+        race: 'wizard',
         tokens: [11, 2, 1, 1, 1]
       },
       'player-2': {
