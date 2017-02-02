@@ -76,29 +76,34 @@ const GameBoard = React.createClass({
     });
 
     const palisades = gameState.palisades;
-    const palisadeDivs = gameState.tiles.map(function(tiles, row) {
-      return tiles.map(function(tile, column) {
+    const palisadeDivs = gameState.tiles.map((tiles, row) => {
+      return tiles.map((tile, column) => {
         const id = row * tiles.length + column;
 
-        const idRight = id + '-' + (id+1);
-        var rightPalisade = '';
-        if(palisades[idRight] != undefined) {
-          const rightPalisadeStyle = {
-            top: TILE_HEIGHT * row + 6,
-            left: TILE_WIDTH * column + 96
-          };
-          rightPalisade = <div className='palisade unplaced vertical' style={rightPalisadeStyle}/>;
-        }
+        const getPalisade = (id, directionClassName, topOffset, leftOffset) => {
+          if(palisades[id] === undefined) {
+            return '';
+          }
 
-        var bottomPalisade = '';
-        const idBottom = id + '-' + (id+8);
-        if(palisades[idBottom] != undefined) {
-          const bottomPalisadeStyle = {
-            top: TILE_HEIGHT * row + 96,
-            left: TILE_WIDTH * column + 6
+          const style = {
+            top: TILE_HEIGHT * row + topOffset,
+            left: TILE_WIDTH * column + leftOffset
           };
-          bottomPalisade = <div className='palisade unplaced horizontal' style={bottomPalisadeStyle}/>;
-        }
+
+          if(palisades[id] === 1) {
+            const className = 'palisade ' + directionClassName;
+            return <div className={className} style={style}/>
+          } else if(palisades[id] === 0) {
+            const className = 'palisade  unplaced ' + directionClassName;
+            const place = () => { this.props.placePalisade(id); };
+            return <div className={className} style={style} onClick={place}/>
+          } else {
+            return '';
+          }
+        };
+
+        const rightPalisade = getPalisade(id + '-' + (id+1), 'vertical', 6, 96);
+        const bottomPalisade = getPalisade(id + '-' + (id+8), 'horizontal', 96, 6);
 
         return <div>{rightPalisade, bottomPalisade}</div>;
       });
@@ -143,18 +148,31 @@ const GetTheGold = React.createClass({
       this.state.clientState.selectedTokenSize = newToken;
       this.setState(this.state);
     };
-    const selectTile = (row, column) => {
+    const sendMessage = (type, value) => {
       this.props.webSocket.send(JSON.stringify({
-        type: 'select-tile',
-        value: {
-          row: row,
-          column: column,
-          size: this.state.clientState.selectedTokenSize
-        }
+        type: type,
+        value: value
       }));
     };
+
+    const selectTile = (row, column) => {
+      const value = {
+        row: row,
+        column: column,
+        size: this.state.clientState.selectedTokenSize
+      };
+      sendMessage('select-tile', value);
+    };
+    const placePalisade = (palisadeId) => {
+      const value = {
+        palisadeId: palisadeId
+      };
+      sendMessage('place-palisade', value);
+    };
+
     return (<div>
-      <GameBoard gameState={gameState} clientState={clientState} selectTile={selectTile}/>
+      <GameBoard gameState={gameState} clientState={clientState}
+          selectTile={selectTile} placePalisade={placePalisade}/>
       <Reserves gameState={gameState} clientState={clientState} selectToken={selectToken}/>
     </div>);
   }

@@ -95,16 +95,8 @@ function getGameEngine() {
     currentState: STATE_NO_MOVE
   };
 
-  function optionsForCurrentPlayer() {
-    const player = gameState.players[gameState.currentPlayer];
-    const options = {};
-    if(gameState.currentState === STATE_NO_MOVE) {
-
-    }
-  }
-
   return {
-    getGameState: function(id) {
+    getGameState: function() {
       return gameState;
     },
     addToken(row, column, value) {
@@ -113,7 +105,11 @@ function getGameEngine() {
         player: gameState.currentPlayer,
         value: value
       };
-      console.log('add token: ' + row);
+      console.log('added token: ' + row);
+    },
+    placePalisade(palisadeId) {
+      gameState.palisades[palisadeId] = 1;
+      console.log('placed palisade' + palisadeId);
     }
   };
 }
@@ -148,6 +144,8 @@ function getApp(gameEngine) {
 
       if(message.type === 'select-tile') {
         gameEngine.addToken(message.value.row, message.value.column, message.value.size);
+      } else if(message.type === 'place-palisade') {
+        gameEngine.placePalisade(message.value.palisadeId);
       }
 
       openChannels.forEach(function(channel) {channel.webSocket.send('reload-state');});
