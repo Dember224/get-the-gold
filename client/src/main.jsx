@@ -121,6 +121,15 @@ function getFromServer(url) {
   return result;
 }
 
+const GameState = React.createClass({
+  render: function() {
+    const gameState = this.props.gameState;
+    return (<div>
+      Current Player: {gameState.currentPlayer}
+    </div>);
+  }
+});
+
 function getGameState() {
   console.log('getGameState');
   return getFromServer('gameState');
@@ -171,6 +180,7 @@ const GetTheGold = React.createClass({
     };
 
     return (<div>
+      <GameState gameState={gameState}/>
       <GameBoard gameState={gameState} clientState={clientState}
           selectTile={selectTile} placePalisade={placePalisade}/>
       <Reserves gameState={gameState} clientState={clientState} selectToken={selectToken}/>
