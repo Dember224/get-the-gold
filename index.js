@@ -106,6 +106,14 @@ function getGameEngine() {
   return {
     getGameState: function(id) {
       return gameState;
+    },
+    addToken(row, column, value) {
+      gameState.tiles[row][column] = {
+        type: 'army',
+        player: gameState.currentPlayer,
+        value: value
+      };
+      console.log('add token: ' + row);
     }
   };
 }
@@ -136,14 +144,12 @@ function getApp(gameEngine) {
 
     webSocket.on('message', function(serializedMessage) {
       console.log("Handling: " + serializedMessage);
+      const message = JSON.parse(serializedMessage);
 
-      if(serializedMessage === 'initialize') {
-        webSocket.send('trigger');
-        console.log('triggered');
-        return;
+      if(message.type === 'select-tile') {
+        gameEngine.addToken(message.value.row, message.value.column, message.value.size);
       }
 
-      const message = JSON.parse(serializedMessage);
       openChannels.forEach(function(channel) {channel.webSocket.send('reload-state');});
 
       console.log("Broadcast Message");

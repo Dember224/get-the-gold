@@ -45,8 +45,8 @@ const GameBoard = React.createClass({
     const currentRace = gameState.players[gameState.currentPlayer].race;
     const unplacedArmyColor = colorMap[currentRace];
 
-    const rows = gameState.tiles.map(function(tiles, row) {
-      const elements = tiles.map(function(tile, column) {
+    const rows = gameState.tiles.map((tiles, row) => {
+      const elements = tiles.map((tile, column) => {
         const style = {
           top: TILE_HEIGHT * row,
           left: TILE_WIDTH * column
@@ -55,6 +55,13 @@ const GameBoard = React.createClass({
         var contents = "";
         if(tile.type === 'gold') {
           contents = (<div className='gold'>{tile.value}</div>);
+        } else if(tile.type === 'army') {
+          const tileRace = gameState.players[tile.player].race;
+          const tileColor = colorMap[tileRace];
+          const armyStyle = {
+            backgroundColor: tileColor
+          };
+          contents = <div className="army" style={armyStyle}/>;
         } else {
           const armyStyle = {
             backgroundColor: unplacedArmyColor
@@ -62,7 +69,8 @@ const GameBoard = React.createClass({
           contents = <div className="army unplaced" style={armyStyle}/>;
         }
 
-        return <div className='tile' style={style}>{contents}</div>;
+        const clickTile = () => { this.props.selectTile(row, column); };
+        return <div onClick={clickTile} className='tile' style={style}>{contents}</div>;
       });
       return <div className='tileRow'>{elements}</div>;
     });
@@ -109,11 +117,18 @@ function getFromServer(url) {
 }
 
 function getGameState() {
+  console.log('getGameState');
   return getFromServer('gameState');
 }
 
 const GetTheGold = React.createClass({
   getInitialState: function() {
+    this.props.webSocket.onmessage = (event) => {
+      console.log('Reload');
+      this.setState({
+        gameState: getGameState()
+      });
+    };
     return {
       clientState: {
         selectedTokenSize: 1
@@ -128,17 +143,24 @@ const GetTheGold = React.createClass({
       this.state.clientState.selectedTokenSize = newToken;
       this.setState(this.state);
     };
+    const selectTile = (row, column) => {
+      this.props.webSocket.send(JSON.stringify({
+        type: 'select-tile',
+        value: {
+          row: row,
+          column: column,
+          size: this.state.clientState.selectedTokenSize
+        }
+      }));
+    };
     return (<div>
-      <GameBoard gameState={gameState} clientState={clientState}/>
+      <GameBoard gameState={gameState} clientState={clientState} selectTile={selectTile}/>
       <Reserves gameState={gameState} clientState={clientState} selectToken={selectToken}/>
     </div>);
   }
 });
 
 const webSocket = new WebSocket("ws://localhost:3000/communication");
-webSocket.onmessage = (event) => {
-   console.log("Received Message");
-};
 webSocket.onopen = (event) => {
   console.log("Open");
   ReactDom.render(<GetTheGold webSocket={webSocket}/>, document.getElementById('content'));
