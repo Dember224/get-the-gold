@@ -100,6 +100,11 @@ function getGameEngine() {
       return gameState;
     },
     addToken(row, column, value) {
+      const playerState = gameState.players[gameState.currentPlayer];
+      if(playerState.tokens[value-1] === 0) {
+        return;
+      }
+      playerState.tokens[value-1] --;
       gameState.tiles[row][column] = {
         type: 'army',
         player: gameState.currentPlayer,
