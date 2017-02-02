@@ -10,6 +10,30 @@
   position: absolute
 }
 
+.race-selector {
+  position: relative;
+  height: 110px;
+  width: 200px;
+}
+
+.race-selector.selected {
+  border-width: 5px;
+  border-style: solid;
+}
+
+.race-selector p {
+  position: absolute;
+  vertical-align: middle;
+  font-family: monospace;
+  top: 20px;
+  font-size: 20px;
+  left: 100px;
+}
+
+.race-selector .army {
+  left: 5px;
+}
+
 .army-count {
   position: relative;
   top: 40px;

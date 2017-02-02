@@ -3,7 +3,9 @@ const ReactDom = require('react-dom');
 
 const colorMap = {
   elf: 'blue',
-  wizard: 'white'
+  mage: 'white',
+  orc: 'red',
+  goblin: 'black'
 };
 
 const TILE_HEIGHT = 102;
@@ -130,6 +132,68 @@ const GameState = React.createClass({
   }
 });
 
+const PlayerSetup = React.createClass({
+  getInitialState: function() {
+    return {
+      playerName: ''
+    };
+  },
+  setName: function(event) {
+    this.setState({
+      playerName: event.target.value
+    });
+  },
+  isNameValid: function() {
+    return this.state.playerName != '' && this.state.playerName != null;
+  },
+  joinGame: function() {
+    this.props.joinGameAsPlayer(this.state.playerName);
+  },
+  render: function() {
+    const gameState = this.props.gameState;
+    const clientState = this.props.clientState;
+
+    if(clientState.username == null) {
+      const joinButton =  this.isNameValid() ? <button onClick={this.joinGame}>Join</button> : <div/>;
+      return (<div>
+        <label htmlFor='name'>Player Name</label>
+        <input name='name' value={this.state.playerName} onChange={this.setName}/>
+        {joinButton}
+      </div>);
+    }
+
+    const usedRaces = {};
+    for(var username in gameState.players) {
+      usedRaces[gameState.players[username].race] = username;
+    }
+
+    const playerRace = gameState.players[clientState.username].race;
+    const raceSelectors = gameState.playerSetup.availableRaces.map(race => {
+      const tokenStyle = {
+        backgroundColor: colorMap[race]
+      };
+      var className = 'race-selector';
+      if(playerRace === race) {
+        className += ' selected'
+      }
+      const onClickFn = usedRaces[race] ? null : () => this.props.setRace(race);
+      const text = usedRaces[race] && usedRaces[race] != clientState.username ? race + '[' + usedRaces[race] + ']' : race;
+      return (<div onClick={onClickFn} className={className} key={race}>
+        <div className='army' style={tokenStyle}/>
+        <p>{text}</p>
+      </div>);
+    });
+
+    const readyButton = playerRace ? <button>Ready</button> : '';
+
+    return (<div>
+      <div>Name: {clientState.username}</div>
+      {raceSelectors}
+      {readyButton}
+    </div>);
+  }
+});
+
 function getGameState() {
   console.log('getGameState');
   return getFromServer('gameState');
@@ -179,12 +243,27 @@ const GetTheGold = React.createClass({
       sendMessage('place-palisade', value);
     };
 
-    return (<div>
-      <GameState gameState={gameState}/>
-      <GameBoard gameState={gameState} clientState={clientState}
-          selectTile={selectTile} placePalisade={placePalisade}/>
-      <Reserves gameState={gameState} clientState={clientState} selectToken={selectToken}/>
-    </div>);
+    if(gameState.currentState === 'state-prologue') {
+      const joinGameAsPlayer = (username) => {
+        sendMessage('join-game', {username: username});
+        clientState.username = username;
+        this.setState({
+          clientState: clientState
+        });
+      };
+      const setRace = (race) => {
+        sendMessage('set-race', {username: clientState.username, race: race});
+      };
+      return <PlayerSetup gameState={gameState} clientState={clientState}
+          joinGameAsPlayer={joinGameAsPlayer} setRace={setRace}/>;
+    } else {
+      return (<div>
+        <GameState gameState={gameState}/>
+        <GameBoard gameState={gameState} clientState={clientState}
+            selectTile={selectTile} placePalisade={placePalisade}/>
+        <Reserves gameState={gameState} clientState={clientState} selectToken={selectToken}/>
+      </div>);
+    }
   }
 });
 

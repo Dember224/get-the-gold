@@ -1,4 +1,5 @@
 
+const STATE_PROLOGUE = 'state-prologue';
 const STATE_NO_MOVE = 'state-no-move';
 const STATE_PLACED_PALISADE = 'placed-palisade';
 
@@ -78,7 +79,7 @@ function getGameEngine() {
   }
 
   // Server Game Logic
-  var gameState = {
+  /*var gameState = {
     players: {
       'player-1': {
         race: 'wizard',
@@ -91,13 +92,32 @@ function getGameEngine() {
     },
     palisades: startingPalisades,
     tiles: startingTiles,
-    currentPlayer: 'player-2',
-    currentState: STATE_NO_MOVE
+    currentPlayer: 'player-1',
+    currentState: STATE_PROLOGUE
+  };*/
+  var gameState = {
+    players: {},
+    palisades: startingPalisades,
+    tiles: startingTiles,
+    currentPlayer: null,
+    currentState: STATE_PROLOGUE,
+    playerSetup: {
+      availableRaces: ['mage', 'elf', 'orc', 'goblin']
+    }
   };
 
   return {
     getGameState: function() {
       return gameState;
+    },
+    joinGame(username) {
+      gameState.players[username] = {
+        race: '',
+        tokens: []
+      };
+    },
+    setRace(username, race) {
+      gameState.players[username].race = race
     },
     addToken(row, column, value) {
       const playerState = gameState.players[gameState.currentPlayer];
@@ -216,6 +236,10 @@ function getApp(gameEngine) {
         gameEngine.addToken(message.value.row, message.value.column, message.value.size);
       } else if(message.type === 'place-palisade') {
         gameEngine.placePalisade(message.value.palisadeId);
+      } else if(message.type === 'join-game') {
+        gameEngine.joinGame(message.value.username);
+      } else if(message.type === 'set-race') {
+        gameEngine.setRace(message.value.username, message.value.race);
       }
 
       openChannels.forEach(function(channel) {channel.webSocket.send('reload-state');});
