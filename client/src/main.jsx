@@ -184,7 +184,7 @@ const PlayerSetup = React.createClass({
       </div>);
     });
 
-    const readyButton = playerRace ? <button>Ready</button> : '';
+    const readyButton = playerRace ? <button onClick={this.props.signalReady}>Ready</button> : '';
 
     return (<div>
       <div>Name: {clientState.username}</div>
@@ -228,6 +228,10 @@ const GetTheGold = React.createClass({
       }));
     };
 
+    const signalReady = () => {
+      sendMessage('signal-ready', {username: this.state.clientState.username});
+    };
+
     const selectTile = (row, column) => {
       const value = {
         row: row,
@@ -255,7 +259,7 @@ const GetTheGold = React.createClass({
         sendMessage('set-race', {username: clientState.username, race: race});
       };
       return <PlayerSetup gameState={gameState} clientState={clientState}
-          joinGameAsPlayer={joinGameAsPlayer} setRace={setRace}/>;
+          joinGameAsPlayer={joinGameAsPlayer} setRace={setRace} signalReady={signalReady}/>;
     } else {
       return (<div>
         <GameState gameState={gameState}/>

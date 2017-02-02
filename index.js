@@ -113,11 +113,25 @@ function getGameEngine() {
     joinGame(username) {
       gameState.players[username] = {
         race: '',
-        tokens: []
+        tokens: [],
+        ready: false
       };
     },
+    signalReady(username) {
+      gameState.players[username].ready = true;
+      var count = 0;
+      var ready = true;
+      for(var player in gameState.players) {
+        count ++;
+        ready = ready && gameState.players[player].ready;
+      }
+      if(ready && count > 1) {
+        gameState.currentState = STATE_NO_MOVE;
+        gameState.currentPlayer = username;
+      }
+    },
     setRace(username, race) {
-      gameState.players[username].race = race
+      gameState.players[username].race = race;
     },
     addToken(row, column, value) {
       const playerState = gameState.players[gameState.currentPlayer];
@@ -240,6 +254,8 @@ function getApp(gameEngine) {
         gameEngine.joinGame(message.value.username);
       } else if(message.type === 'set-race') {
         gameEngine.setRace(message.value.username, message.value.race);
+      } else if(message.type === 'signal-ready') {
+        gameEngine.signalReady(message.value.username);
       }
 
       openChannels.forEach(function(channel) {channel.webSocket.send('reload-state');});
