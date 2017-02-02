@@ -110,6 +110,71 @@ function getGameEngine() {
     placePalisade(palisadeId) {
       gameState.palisades[palisadeId] = 1;
       console.log('placed palisade' + palisadeId);
+
+      const isValid = (row, column) => {
+        return 0 <= row && row < BOARD_HEIGHT && 0 <= column && column < BOARD_WIDTH;
+      };
+
+      const tileId = (tile) => {
+        return tile.row * BOARD_WIDTH + tile.column;
+      };
+
+      const getPalisadeId = (a, b) => {
+        return Math.min(a,b) + '-' + Math.max(a,b);
+      };
+
+      const isValidPalisade = (row, column, potentialPalisade) => {
+        const canReach = (a, b) => {
+          const palisadeId = getPalisadeId(tileId(a), tileId(b));
+          return palisadeId !== potentialPalisade && gameState.palisades[palisadeId] !== 1;
+        };
+
+        const reachableNeighbors = (row, column) => {
+          return [
+            {row:row-1, column:column},
+            {row:row+1, column:column},
+            {row:row, column:column-1},
+            {row:row, column:column+1}
+          ].filter(tile => isValid(tile.row, tile.column) &&
+              canReach({row: row, column: column}, tile));
+        };
+
+        const visited = [];
+        const potential = [{row:row, column:column}];
+        while(visited.length < 4 && potential.length > 0) {
+          const next = potential.pop();
+          visited.push(next);
+          const neighbors = reachableNeighbors(next.row, next.column);
+          const valid = neighbors.filter(x => {
+            matches = y => y.row === x.row && y.column === x.column;
+            return !visited.some(matches) && !potential.some(matches)
+          });
+          valid.forEach(x => potential.push(x));
+        }
+        return visited.length >= 4;
+      };
+
+      // update the palisade list so that invalid palisades are set to -1
+      // palisades are invalid if they would create a territory of size < 4
+      for(var row=0; row<BOARD_HEIGHT; row++) {
+        for(var column=0; column<BOARD_WIDTH; column++) {
+          const tile = {row: row, column:column};
+
+          if(isValid(row+1, column)) {
+            const check = getPalisadeId(tileId(tile), tileId({row:row+1, column:column}));
+            if(gameState.palisades[check] === 0 && (!isValidPalisade(row, column, check) || !isValidPalisade(row+1, column, check))) {
+              gameState.palisades[check] = -1;
+            }
+          }
+
+          if(isValid(row, column+1)) {
+            const check = getPalisadeId(tileId(tile), tileId({row:row, column:column+1}));
+            if(gameState.palisades[check] === 0 && (!isValidPalisade(row, column, check) || !isValidPalisade(row, column+1, check))) {
+              gameState.palisades[check] = -1;
+            }
+          }
+        }
+      }
     }
   };
 }
