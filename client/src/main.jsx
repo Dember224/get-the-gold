@@ -17,7 +17,7 @@ const Reserves = React.createClass({
     const playerRace = playerState.race;
     const color = colorMap[playerRace];
 
-    const tokens = playerState.tokens.map(function(count, value) {
+    const tokens = playerState.tokens.map((count, value) => {
       const tokenStyle = {
         left: 10 + value*150
       };
@@ -25,8 +25,11 @@ const Reserves = React.createClass({
       const armyStyle = {
         backgroundColor: color
       };
+      const selectValue = () => { this.props.selectToken(value+1); };
       return (<div className="unused-token" style={tokenStyle}>
-        <div className={armyClassName} style={armyStyle}><p>{value+1}</p></div>
+        <div className={armyClassName} style={armyStyle} onClick={selectValue}>
+          <p>{value+1}</p>
+        </div>
         <div className="army-count">x{count}</div>
       </div>);
     });
@@ -74,7 +77,7 @@ const GameBoard = React.createClass({
         if(palisades[idRight] != undefined) {
           const rightPalisadeStyle = {
             top: TILE_HEIGHT * row + 6,
-            left: TILE_WIDTH * column + 98
+            left: TILE_WIDTH * column + 96
           };
           rightPalisade = <div className='palisade unplaced vertical' style={rightPalisadeStyle}/>;
         }
@@ -83,7 +86,7 @@ const GameBoard = React.createClass({
         const idBottom = id + '-' + (id+8);
         if(palisades[idBottom] != undefined) {
           const bottomPalisadeStyle = {
-            top: TILE_HEIGHT * row + 98,
+            top: TILE_HEIGHT * row + 96,
             left: TILE_WIDTH * column + 6
           };
           bottomPalisade = <div className='palisade unplaced horizontal' style={bottomPalisadeStyle}/>;
@@ -109,15 +112,25 @@ function getGameState() {
   return getFromServer('gameState');
 }
 
-const clientState = {
-  selectedTokenSize: 1
-};
 const GetTheGold = React.createClass({
+  getInitialState: function() {
+    return {
+      clientState: {
+        selectedTokenSize: 1
+      },
+      gameState: getGameState()
+    }
+  },
   render: function() {
-    const gameState = getGameState();
+    const gameState = this.state.gameState;
+    const clientState = this.state.clientState;
+    const selectToken = (newToken) => {
+      this.state.clientState.selectedTokenSize = newToken;
+      this.setState(this.state);
+    };
     return (<div>
       <GameBoard gameState={gameState} clientState={clientState}/>
-      <Reserves gameState={gameState} clientState={clientState}/>
+      <Reserves gameState={gameState} clientState={clientState} selectToken={selectToken}/>
     </div>);
   }
 });
@@ -128,5 +141,5 @@ webSocket.onmessage = (event) => {
 };
 webSocket.onopen = (event) => {
   console.log("Open");
-  ReactDom.render(<GetTheGold/>, document.getElementById('content'));
+  ReactDom.render(<GetTheGold webSocket={webSocket}/>, document.getElementById('content'));
 };

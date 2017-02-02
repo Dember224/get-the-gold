@@ -41,8 +41,8 @@
   background-color: gold;
   height: 20px;
   width: 20px;
-  top: 5px;
-  right: 5px;
+  top: 8px;
+  right: 8px;
   text-align: center;
   color: white;
   position: absolute;
@@ -98,11 +98,11 @@
 }
 
 .palisade.vertical {
-  width: 8px;
+  width: 12px;
   height: 90px;
 }
 
 .palisade.horizontal {
   width: 90px;
-  height: 8px;
+  height: 12px;
 }
