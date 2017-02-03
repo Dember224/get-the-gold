@@ -65,7 +65,13 @@ const GameBoard = React.createClass({
           const armyStyle = {
             backgroundColor: tileColor
           };
-          contents = <div className="army" style={armyStyle}/>;
+          if(tile.player === this.props.clientState.username) {
+            contents = (<div className="army" style={armyStyle}>
+              <p>{tile.value}</p>
+            </div>);
+          } else {
+            contents = <div className="army" style={armyStyle}/>;
+          }
         } else if(isCurrentPlayer && gameState.currentState == 'state-no-move') {
           const armyStyle = {
             backgroundColor: unplacedArmyColor
