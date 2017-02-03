@@ -15,7 +15,7 @@ const Reserves = React.createClass({
   render: function() {
     const gameState = this.props.gameState;
     const clientState = this.props.clientState;
-    const playerState = gameState.players[gameState.currentPlayer];
+    const playerState = gameState.players[clientState.username];
     const playerRace = playerState.race;
     const color = colorMap[playerRace];
 
