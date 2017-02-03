@@ -97,6 +97,7 @@ function getGameEngine() {
   };*/
   var gameState = {
     players: {},
+    playerOrder: [],
     palisades: startingPalisades,
     tiles: startingTiles,
     currentPlayer: null,
@@ -104,6 +105,13 @@ function getGameEngine() {
     playerSetup: {
       availableRaces: ['mage', 'elf', 'orc', 'goblin']
     }
+  };
+
+  const updateFornextTurn = function() {
+    const index = gameState.playerOrder.indexOf(gameState.currentPlayer);
+    gameState.currentPlayer = gameState.playerOrder[(index + 1) % gameState.playerOrder.length];
+    gameState.currentState = STATE_NO_MOVE;
+    console.log('CurrentPlayer: ' + gameState.currentPlayer);
   };
 
   return {
@@ -116,6 +124,7 @@ function getGameEngine() {
         tokens: [],
         ready: false
       };
+      gameState.playerOrder.push(username);
     },
     signalReady(username) {
       gameState.players[username].ready = true;
@@ -144,6 +153,7 @@ function getGameEngine() {
         player: gameState.currentPlayer,
         value: value
       };
+      updateFornextTurn();
       console.log('added token: ' + row);
     },
     placePalisade(palisadeId) {
