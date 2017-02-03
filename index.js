@@ -43,6 +43,16 @@ const goldTiles = [
   }
 ];
 
+const getReserveValues = (count) => {
+  if(count == 2) {
+    return [11, 2, 1, 1, 1];
+  } else if(count == 3) {
+    return [7, 2, 1, 1];
+  } else if(count == 4) {
+    return [5, 1, 1, 1];
+  }
+};
+
 function getGameEngine() {
   const startingTiles = new Array(BOARD_HEIGHT);
   for(var i=0; i<BOARD_HEIGHT; i++) {
@@ -137,6 +147,9 @@ function getGameEngine() {
       if(ready && count > 1) {
         gameState.currentState = STATE_NO_MOVE;
         gameState.currentPlayer = username;
+        for(var player in gameState.players) {
+          gameState.players[player].tokens = getReserveValues(count);
+        }
       }
     },
     setRace(username, race) {
