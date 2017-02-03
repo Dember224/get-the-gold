@@ -158,6 +158,12 @@ function getGameEngine() {
     },
     placePalisade(palisadeId) {
       gameState.palisades[palisadeId] = 1;
+      if(gameState.currentState == STATE_PLACED_PALISADE) {
+        updateForNextTurn();
+      } else if(gameState.currentState == STATE_NO_MOVE) {
+        gameState.currentState = STATE_PLACED_PALISADE;
+      }
+
       console.log('placed palisade' + palisadeId);
 
       const isValid = (row, column) => {
