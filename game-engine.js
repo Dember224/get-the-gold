@@ -170,6 +170,9 @@ module.exports = function() {
       return gameState;
     },
     joinGame(username) {
+      if(gameState.playerOrder.length == 4) {
+        throw 'Unable to join game: Already 4 players';
+      }
       gameState.players[username] = {
         race: '',
         tokens: [],
@@ -187,7 +190,7 @@ module.exports = function() {
       }
       if(ready && count > 1) {
         gameState.currentState = STATE_NO_MOVE;
-        gameState.currentPlayer = username;
+        gameState.currentPlayer = gameState.playerOrder[0];
         for(var player in gameState.players) {
           gameState.players[player].tokens = getReserveValues(count);
         }
