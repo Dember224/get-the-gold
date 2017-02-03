@@ -107,7 +107,7 @@ function getGameEngine() {
     }
   };
 
-  const updateFornextTurn = function() {
+  const updateForNextTurn = function() {
     const index = gameState.playerOrder.indexOf(gameState.currentPlayer);
     gameState.currentPlayer = gameState.playerOrder[(index + 1) % gameState.playerOrder.length];
     gameState.currentState = STATE_NO_MOVE;
@@ -153,7 +153,7 @@ function getGameEngine() {
         player: gameState.currentPlayer,
         value: value
       };
-      updateFornextTurn();
+      updateForNextTurn();
       console.log('added token: ' + row);
     },
     placePalisade(palisadeId) {

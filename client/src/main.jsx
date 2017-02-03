@@ -47,6 +47,8 @@ const GameBoard = React.createClass({
     const currentRace = gameState.players[gameState.currentPlayer].race;
     const unplacedArmyColor = colorMap[currentRace];
 
+    const isCurrentPlayer = this.props.clientState.username == gameState.currentPlayer;
+
     const rows = gameState.tiles.map((tiles, row) => {
       const elements = tiles.map((tile, column) => {
         const style = {
@@ -64,14 +66,15 @@ const GameBoard = React.createClass({
             backgroundColor: tileColor
           };
           contents = <div className="army" style={armyStyle}/>;
-        } else {
+        } else if(isCurrentPlayer && gameState.currentState == 'state-no-move') {
           const armyStyle = {
             backgroundColor: unplacedArmyColor
           };
           contents = <div className="army unplaced" style={armyStyle}/>;
         }
 
-        const clickTile = () => { this.props.selectTile(row, column); };
+        const clickTile = isCurrentPlayer ?
+          () => { this.props.selectTile(row, column); } : () => {} ;
         return <div onClick={clickTile} className='tile' style={style}>{contents}</div>;
       });
       return <div className='tileRow'>{elements}</div>;
@@ -95,7 +98,7 @@ const GameBoard = React.createClass({
           if(palisades[id] === 1) {
             const className = 'palisade ' + directionClassName;
             return <div className={className} style={style}/>
-          } else if(palisades[id] === 0) {
+          } else if(palisades[id] === 0 && isCurrentPlayer) {
             const className = 'palisade  unplaced ' + directionClassName;
             const place = () => { this.props.placePalisade(id); };
             return <div className={className} style={style} onClick={place}/>
