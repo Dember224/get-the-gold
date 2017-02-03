@@ -1,6 +1,7 @@
 const STATE_PROLOGUE = 'state-prologue';
 const STATE_NO_MOVE = 'state-no-move';
-const STATE_PLACED_PALISADE = 'placed-palisade';
+const STATE_PLACED_PALISADE = 'state-placed-palisade';
+const STATE_GAME_OVER = 'state-game-over';
 
 const BOARD_WIDTH = 8;
 const BOARD_HEIGHT = 5;
@@ -116,10 +117,51 @@ module.exports = function() {
     }
   };
 
+  // Game is over when all tiles are filled in on the game board - so iterate
+  // through each tile and determine if any of them are empty
+  const isGameOver = function() {
+    return !gameState.tiles.some((row) => {
+      return row.some((tile) => {
+        return tile.type === undefined;
+      });
+    });
+  };
+
+  const canReach = (a, b, potentialPalisade) => {
+    const palisadeId = getPalisadeId(tileId(a), tileId(b));
+    return palisadeId !== potentialPalisade && gameState.palisades[palisadeId] !== 1;
+  };
+
+  const reachableNeighbors = (row, column, potentialPalisade) => {
+    return [
+      {row:row-1, column:column},
+      {row:row+1, column:column},
+      {row:row, column:column-1},
+      {row:row, column:column+1}
+    ].filter(tile => isValid(tile.row, tile.column) &&
+        canReach({row: row, column: column}, tile, potentialPalisade));
+  };
+
+  const isValid = (row, column) => {
+    return 0 <= row && row < BOARD_HEIGHT && 0 <= column && column < BOARD_WIDTH;
+  };
+
+  const tileId = (tile) => {
+    return tile.row * BOARD_WIDTH + tile.column;
+  };
+
+  const getPalisadeId = (a, b) => {
+    return Math.min(a,b) + '-' + Math.max(a,b);
+  };
+
   const updateForNextTurn = function() {
     const index = gameState.playerOrder.indexOf(gameState.currentPlayer);
     gameState.currentPlayer = gameState.playerOrder[(index + 1) % gameState.playerOrder.length];
-    gameState.currentState = STATE_NO_MOVE;
+    if(isGameOver()) {
+      gameState.currentState = STATE_GAME_OVER;
+    } else {
+      gameState.currentState = STATE_NO_MOVE;
+    }
     console.log('CurrentPlayer: ' + gameState.currentPlayer);
   };
 
@@ -178,40 +220,13 @@ module.exports = function() {
 
       console.log('placed palisade' + palisadeId);
 
-      const isValid = (row, column) => {
-        return 0 <= row && row < BOARD_HEIGHT && 0 <= column && column < BOARD_WIDTH;
-      };
-
-      const tileId = (tile) => {
-        return tile.row * BOARD_WIDTH + tile.column;
-      };
-
-      const getPalisadeId = (a, b) => {
-        return Math.min(a,b) + '-' + Math.max(a,b);
-      };
-
       const isValidPalisade = (row, column, potentialPalisade) => {
-        const canReach = (a, b) => {
-          const palisadeId = getPalisadeId(tileId(a), tileId(b));
-          return palisadeId !== potentialPalisade && gameState.palisades[palisadeId] !== 1;
-        };
-
-        const reachableNeighbors = (row, column) => {
-          return [
-            {row:row-1, column:column},
-            {row:row+1, column:column},
-            {row:row, column:column-1},
-            {row:row, column:column+1}
-          ].filter(tile => isValid(tile.row, tile.column) &&
-              canReach({row: row, column: column}, tile));
-        };
-
         const visited = [];
         const potential = [{row:row, column:column}];
         while(visited.length < 4 && potential.length > 0) {
           const next = potential.pop();
           visited.push(next);
-          const neighbors = reachableNeighbors(next.row, next.column);
+          const neighbors = reachableNeighbors(next.row, next.column, potentialPalisade);
           const valid = neighbors.filter(x => {
             matches = y => y.row === x.row && y.column === x.column;
             return !visited.some(matches) && !potential.some(matches)
