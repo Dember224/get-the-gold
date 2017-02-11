@@ -204,6 +204,9 @@ module.exports = function() {
       if(playerState.tokens[value-1] === 0) {
         return;
       }
+      if(gameState.tiles[row][column].type) {
+        return;
+      }
       playerState.tokens[value-1] --;
       gameState.tiles[row][column] = {
         type: 'army',
