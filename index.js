@@ -16,13 +16,7 @@ function getApp(gameEngine) {
     response.send(JSON.stringify(gameEngine.getGameState(1)));
   });
 
-  var openChannels = [];
   app.ws('/communication', function(webSocket, request) {
-    openChannels.push({
-      webSocket: webSocket,
-      user: request.user
-    });
-
     webSocket.on('message', function(serializedMessage) {
       console.log("Handling: " + serializedMessage);
       const message = JSON.parse(serializedMessage);
@@ -39,8 +33,8 @@ function getApp(gameEngine) {
         gameEngine.signalReady(message.value.username);
       }
 
-      openChannels.forEach(function(channel) {
-        channel.webSocket.send('reload-state');
+      expressWs.getWss().clients.forEach(function(client) {
+        client.send('reload-state');
       });
 
       console.log("Broadcast Message");
