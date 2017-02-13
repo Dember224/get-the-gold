@@ -1,5 +1,9 @@
 const assert = require('assert');
-const getGameEngine = require('../game-engine.js');
+const gameEngine = require('../game-engine.js');
+
+function getGameEngine() {
+  return gameEngine(gameEngine.getInitialState());
+}
 
 describe('GameEngine', function() {
   describe('getGameState', function() {
