@@ -3,7 +3,7 @@ const async = require('async');
 const createGameState = require('../game-state.js');
 
 const MongoClient = require('mongodb').MongoClient;
-const testUrl = 'mongodb://localhost:27017/test'
+const testUrl = 'mongodb://localhost:27017/test';
 
 const mongo = function(callback) {
   MongoClient.connect(testUrl, function(e, db) {

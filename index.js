@@ -16,7 +16,7 @@ function getApp(gameEngine) {
     response.send(JSON.stringify(gameEngine.getGameState(1)));
   });
 
-  const openChannels = [];
+  var openChannels = [];
   app.ws('/communication', function(webSocket, request) {
     openChannels.push({
       webSocket: webSocket,
@@ -39,7 +39,9 @@ function getApp(gameEngine) {
         gameEngine.signalReady(message.value.username);
       }
 
-      openChannels.forEach(function(channel) {channel.webSocket.send('reload-state');});
+      openChannels.forEach(function(channel) {
+        channel.webSocket.send('reload-state');
+      });
 
       console.log("Broadcast Message");
     });
@@ -54,5 +56,5 @@ function getApp(gameEngine) {
   return app;
 };
 
-const gameEngine = require('./game-engine.js')();
-getApp(gameEngine);
+const gameEngine = require('./game-engine.js');
+getApp(gameEngine(gameEngine.getInitialState()));
