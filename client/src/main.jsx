@@ -205,7 +205,7 @@ const PlayerSetup = React.createClass({
 
 function getGameState() {
   console.log('getGameState');
-  return getFromServer('gameState');
+  return getFromServer('/gameState');
 }
 
 const GetTheGold = React.createClass({
