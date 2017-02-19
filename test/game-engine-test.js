@@ -5,7 +5,16 @@ function getGameEngine() {
   return gameEngine(gameEngine.getInitialState());
 }
 
-describe('GameEngine', function() {
+function getSetupGameEngine() {
+  const gameEngine = getGameEngine();
+  gameEngine.joinGame('player-1'); gameEngine.joinGame('player-2');
+  gameEngine.setRace('player-1', 'elf'); gameEngine.setRace('player-2', 'mage');
+  gameEngine.signalReady('player-1');
+  gameEngine.signalReady('player-2');
+  return gameEngine;
+}
+
+describe('GameEngine Public Functions', function() {
   describe('getGameState', function() {
     const gameEngine = getGameEngine();
     it('should have no players', function() {
@@ -120,14 +129,6 @@ describe('GameEngine', function() {
   });
 
   describe('addToken', function() {
-    function getSetupGameEngine() {
-      const gameEngine = getGameEngine();
-      gameEngine.joinGame('player-1'); gameEngine.joinGame('player-2');
-      gameEngine.setRace('player-1', 'elf'); gameEngine.setRace('player-2', 'mage');
-      gameEngine.signalReady('player-1');
-      gameEngine.signalReady('player-2');
-      return gameEngine;
-    }
     describe('adding token of value 1 in empty tile 0,0', function() {
       const gameEngine = getSetupGameEngine();
       gameEngine.addToken(0,0,1);
@@ -143,6 +144,103 @@ describe('GameEngine', function() {
       it('should decrement the number of tokens for player-1 of value 1', function() {
         assert.deepEqual([10, 2, 1, 1, 1], gameEngine.getGameState().players['player-1'].tokens);
       });
+    });
+  });
+});
+
+describe('Game Engine private functions', function() {
+  describe('__getTerritoryTiles', function() {
+    it('should return the tiles that are within the territory, sequestered by the palisades', function() {
+      const gameEngine = getSetupGameEngine();
+
+      gameEngine.placePalisade('1-2');
+      gameEngine.placePalisade('8-16');
+      gameEngine.placePalisade('9-10');
+      gameEngine.placePalisade('9-17');
+
+      assert.deepEqual([
+        {row:1, column:1},
+        {row:1, column:0},
+        {row:0, column:0},
+        {row:0, column:1}
+      ], gameEngine.__getTerritoryTiles(1,1));
+    });
+  });
+
+  // 0:W1    1:B1    1-2: |
+  // 8:W1    9:G     9-10:|
+  // 8-16:-- 9-17:--
+  describe('__getGoldWinnersForTile', function() {
+    it('should return player-1 when player-1 has more armies in the territory', function() {
+      const gameEngine = getSetupGameEngine();
+
+      gameEngine.addToken(0,0,1); // player-1
+      gameEngine.addToken(0,1,1); // player-2
+      gameEngine.addToken(1,0,1); // player-1
+      gameEngine.placePalisade('1-2');
+      gameEngine.placePalisade('8-16');
+      gameEngine.placePalisade('9-10');
+      gameEngine.placePalisade('9-17');
+
+      assert.deepEqual(['player-1'], gameEngine.__getGoldWinnersForTile(1,1));
+    });
+    it('should return player-1 and player-2 when they have the same value in the territory', function() {
+      const gameEngine = getSetupGameEngine();
+
+      gameEngine.addToken(0,0,1); // player-1
+      gameEngine.addToken(0,1,2); // player-2
+      gameEngine.addToken(1,0,1); // player-1
+      gameEngine.placePalisade('1-2');
+      gameEngine.placePalisade('8-16');
+      gameEngine.placePalisade('9-10');
+      gameEngine.placePalisade('9-17');
+
+      assert.deepEqual(['player-1', 'player-2'], gameEngine.__getGoldWinnersForTile(1,1));
+    });
+  });
+
+  describe('__getPlayerScores', function() {
+    it('should return player-1 as having the full value of a territory if they have more', function() {
+      const gameEngine = getSetupGameEngine();
+
+      gameEngine.addToken(0,0,1); // player-1
+      gameEngine.addToken(0,1,1); // player-2
+      gameEngine.addToken(1,0,1); // player-1
+      gameEngine.placePalisade('1-2');
+      gameEngine.placePalisade('8-16');
+      gameEngine.placePalisade('9-10');
+      gameEngine.placePalisade('9-17');
+
+      assert.deepEqual({'player-1': 4}, gameEngine.__getPlayerScores());
+    });
+    it('should return both players as having 2 when they have the same army size in a territory', function() {
+      const gameEngine = getSetupGameEngine();
+
+      gameEngine.addToken(0,0,1); // player-1
+      gameEngine.addToken(0,1,2); // player-2
+      gameEngine.addToken(1,0,1); // player-1
+      gameEngine.placePalisade('1-2');
+      gameEngine.placePalisade('8-16');
+      gameEngine.placePalisade('9-10');
+      gameEngine.placePalisade('9-17');
+
+      assert.deepEqual({'player-1': 2, 'player-2': 2}, gameEngine.__getPlayerScores());
+    });
+  });
+
+  describe('__determineWinner', function() {
+    it('should return player-1 when they have the most points', function() {
+      const gameEngine = getSetupGameEngine();
+
+      gameEngine.addToken(0,0,1); // player-1
+      gameEngine.addToken(0,1,1); // player-2
+      gameEngine.addToken(1,0,1); // player-1
+      gameEngine.placePalisade('1-2');
+      gameEngine.placePalisade('8-16');
+      gameEngine.placePalisade('9-10');
+      gameEngine.placePalisade('9-17');
+
+      assert.equal('player-1', gameEngine.__determineWinner());
     });
   });
 });

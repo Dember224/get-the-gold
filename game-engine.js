@@ -69,16 +69,6 @@ const gameEngine = function(gameState) {
     return palisadeId !== potentialPalisade && gameState.palisades[palisadeId] !== 1;
   };
 
-  const reachableNeighbors = (row, column, potentialPalisade) => {
-    return [
-      {row:row-1, column:column},
-      {row:row+1, column:column},
-      {row:row, column:column-1},
-      {row:row, column:column+1}
-    ].filter(tile => isValid(tile.row, tile.column) &&
-        canReach({row: row, column: column}, tile, potentialPalisade));
-  };
-
   const isValid = (row, column) => {
     return 0 <= row && row < BOARD_HEIGHT && 0 <= column && column < BOARD_WIDTH;
   };
@@ -91,18 +81,97 @@ const gameEngine = function(gameState) {
     return Math.min(a,b) + '-' + Math.max(a,b);
   };
 
+  const reachableNeighbors = (row, column, potentialPalisade) => {
+    return [
+      {row:row-1, column:column},
+      {row:row+1, column:column},
+      {row:row, column:column-1},
+      {row:row, column:column+1}
+    ].filter(tile => isValid(tile.row, tile.column) &&
+        canReach({row: row, column: column}, tile, potentialPalisade));
+  };
+
+  const getTerritoryTiles = (row, column, maxCount, potentialPalisade) => {
+    const visited = [];
+    const potential = [{row:row, column:column}];
+    while(potential.length > 0 && maxCount == null || visited.length < maxCount) {
+      const next = potential.pop();
+      visited.push(next);
+      const neighbors = reachableNeighbors(next.row, next.column, potentialPalisade);
+      const valid = neighbors.filter(x => {
+        matches = y => y.row === x.row && y.column === x.column;
+        return !visited.some(matches) && !potential.some(matches)
+      });
+      valid.forEach(x => potential.push(x));
+    }
+    return visited;
+  };
+
+  const isValidPalisade = (row, column, potentialPalisade) => {
+    return getTerritoryTiles(row, column, 4, potentialPalisade).length >= 4;
+  };
+
+  const getGoldWinnersForTile = (row, column) => {
+    const tiles = getTerritoryTiles(row, column).map(x => gameState.tiles[x.row][x.column]);
+    const playerValues = {};
+    let max = 0;
+    tiles.filter(tile => tile.type == 'army').forEach(tile => {
+      playerValues[tile.player] = (playerValues[tile.player] || 0) + tile.value;
+      max = Math.max(playerValues[tile.player], max);
+    });
+    return Object.keys(playerValues).filter(player => playerValues[player] == max);
+  };
+
+  const getPlayerScores = () => {
+    const goldTileWinners = goldTiles.map(goldTile => {
+      const row = goldTile.position[0], column = goldTile.position[1];
+      return getGoldWinnersForTile(row, column);
+    });
+
+    const playerTiles = {};
+    goldTiles.forEach((goldTile, index) => {
+      const winners = goldTileWinners[index];
+      const numberOfWinners = winners.length;
+      const valueForTile = Math.floor(goldTile.value / numberOfWinners);
+      winners.forEach(player => playerTiles[player] = (playerTiles[player] || 0) + valueForTile);
+    });
+
+    return playerTiles;
+  };
+
+  const determineWinner = () => {
+    let max = 0;
+    let winner = null;
+    const playerTiles = getPlayerScores();
+    for(const player in playerTiles) {
+      if(playerTiles[player] > max) {
+        max = playerTiles[player];
+        winner = player;
+      }
+    }
+
+    return winner;
+  };
+
   const updateForNextTurn = function() {
     const index = gameState.playerOrder.indexOf(gameState.currentPlayer);
     gameState.currentPlayer = gameState.playerOrder[(index + 1) % gameState.playerOrder.length];
     if(isGameOver()) {
       gameState.currentState = STATE_GAME_OVER;
+      gameState.winner = determineWinner();
     } else {
       gameState.currentState = STATE_NO_MOVE;
     }
-    console.log('CurrentPlayer: ' + gameState.currentPlayer);
   };
 
   return {
+    __getPlayerScores: getPlayerScores,
+    __determineWinner: determineWinner,
+    __getGoldWinnersForTile: getGoldWinnersForTile,
+    __getTerritoryTiles: getTerritoryTiles,
+    __reachableNeighbors: reachableNeighbors,
+    __isGameOver: isGameOver,
+
     getGameState: function() {
       return gameState;
     },
@@ -151,7 +220,6 @@ const gameEngine = function(gameState) {
         value: value
       };
       updateForNextTurn();
-      console.log('added token: ' + row);
     },
     placePalisade(palisadeId) {
       gameState.palisades[palisadeId] = 1;
@@ -160,8 +228,6 @@ const gameEngine = function(gameState) {
       } else if(gameState.currentState == STATE_NO_MOVE) {
         gameState.currentState = STATE_PLACED_PALISADE;
       }
-
-      console.log('placed palisade' + palisadeId);
 
       const isValidPalisade = (row, column, potentialPalisade) => {
         const visited = [];
@@ -203,6 +269,9 @@ const gameEngine = function(gameState) {
     }
   };
 };
+
+gameEngine.__BOARD_HEIGHT = BOARD_HEIGHT;
+gameEngine.__BOARD_WIDTH = BOARD_WIDTH;
 
 gameEngine.getInitialState = function() {
   const startingTiles = new Array(BOARD_HEIGHT);
