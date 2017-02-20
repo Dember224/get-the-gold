@@ -207,6 +207,17 @@ const PlayerSetup = React.createClass({
   }
 });
 
+const GameOver = React.createClass({
+  render() {
+    return (<div>
+      <p><b>Game Over</b></p>
+      <p>Winner: {this.props.gameState.winner}</p>
+      <p>{this.props.gameState.winner === this.props.clientState.username ?
+        'Congrats!' : "You have failed your people"}</p>
+    </div>);
+  }
+});
+
 function getGameState() {
   console.log('getGameState');
   return getFromServer('/gameState');
@@ -230,6 +241,11 @@ const GetTheGold = React.createClass({
   render: function() {
     const gameState = this.state.gameState;
     const clientState = this.state.clientState;
+
+    if(gameState.currentState === 'state-game-over') {
+      return <GameOver gameState={gameState} clientState={clientState}/>;
+    }
+
     const sendMessage = (type, value) => {
       this.props.webSocket.send(JSON.stringify({
         type: type,
