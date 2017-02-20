@@ -149,6 +149,28 @@ describe('GameEngine Public Functions', function() {
 });
 
 describe('Game Engine private functions', function() {
+  describe('__getReachableNeighbors', function() {
+    it('should return only valid tiles - nothing out of bounds', function() {
+      const gameEngine = getGameEngine();
+      assert.deepEqual([
+        {row:1,column:0},
+        {row:0,column:1}
+      ], gameEngine.__getReachableNeighbors(0,0));
+    });
+    it('should respect a potential palisade - ignore the tile on the other side of it', function() {
+      const gameEngine = getGameEngine();
+      assert.deepEqual([
+        {row:1, column:0}
+      ], gameEngine.__getReachableNeighbors(0,0,'0-1'));
+    });
+    it('should respect placed palisades - ignore the tile on the other side of it', function() {
+      const gameEngine = getGameEngine();
+      gameEngine.placePalisade('0-1');assert.deepEqual([
+        {row:1, column:0}
+      ], gameEngine.__getReachableNeighbors(0,0));
+    });
+  });
+
   describe('__getTerritoryTiles', function() {
     it('should return the tiles that are within the territory, sequestered by the palisades', function() {
       const gameEngine = getSetupGameEngine();

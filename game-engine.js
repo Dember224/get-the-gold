@@ -81,7 +81,7 @@ const gameEngine = function(gameState) {
     return Math.min(a,b) + '-' + Math.max(a,b);
   };
 
-  const reachableNeighbors = (row, column, potentialPalisade) => {
+  const getReachableNeighbors = (row, column, potentialPalisade) => {
     return [
       {row:row-1, column:column},
       {row:row+1, column:column},
@@ -97,7 +97,7 @@ const gameEngine = function(gameState) {
     while(potential.length > 0 && maxCount == null || visited.length < maxCount) {
       const next = potential.pop();
       visited.push(next);
-      const neighbors = reachableNeighbors(next.row, next.column, potentialPalisade);
+      const neighbors = getReachableNeighbors(next.row, next.column, potentialPalisade);
       const valid = neighbors.filter(x => {
         matches = y => y.row === x.row && y.column === x.column;
         return !visited.some(matches) && !potential.some(matches)
@@ -169,7 +169,7 @@ const gameEngine = function(gameState) {
     __determineWinner: determineWinner,
     __getGoldWinnersForTile: getGoldWinnersForTile,
     __getTerritoryTiles: getTerritoryTiles,
-    __reachableNeighbors: reachableNeighbors,
+    __getReachableNeighbors: getReachableNeighbors,
     __isGameOver: isGameOver,
 
     getGameState: function() {
@@ -235,7 +235,7 @@ const gameEngine = function(gameState) {
         while(visited.length < 4 && potential.length > 0) {
           const next = potential.pop();
           visited.push(next);
-          const neighbors = reachableNeighbors(next.row, next.column, potentialPalisade);
+          const neighbors = getReachableNeighbors(next.row, next.column, potentialPalisade);
           const valid = neighbors.filter(x => {
             matches = y => y.row === x.row && y.column === x.column;
             return !visited.some(matches) && !potential.some(matches)
