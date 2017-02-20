@@ -219,14 +219,12 @@ const GameOver = React.createClass({
 });
 
 function getGameState() {
-  console.log('getGameState');
   return getFromServer('/gameState');
 }
 
 const GetTheGold = React.createClass({
   getInitialState: function() {
     this.props.webSocket.onmessage = (event) => {
-      console.log('Reload');
       this.setState({
         gameState: getGameState()
       });
@@ -306,8 +304,8 @@ const GetTheGold = React.createClass({
   }
 });
 
-const webSocket = new WebSocket("ws://localhost:3000/communication");
+const host = location.host;
+const webSocket = new WebSocket("ws://" + host + "/communication");
 webSocket.onopen = (event) => {
-  console.log("Open");
   ReactDom.render(<GetTheGold webSocket={webSocket}/>, document.getElementById('content'));
 };
