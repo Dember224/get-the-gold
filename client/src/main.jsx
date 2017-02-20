@@ -135,8 +135,12 @@ function getFromServer(url) {
 const GameState = React.createClass({
   render: function() {
     const gameState = this.props.gameState;
+    const clientState = this.props.clientState;
+    const endTurnButton = clientState.username != gameState.currentPlayer ? '' :
+        (<button onClick={this.props.endTurn}>End Turn</button>);
     return (<div>
       Current Player: {gameState.currentPlayer}
+      {endTurnButton}
     </div>);
   }
 });
@@ -226,10 +230,6 @@ const GetTheGold = React.createClass({
   render: function() {
     const gameState = this.state.gameState;
     const clientState = this.state.clientState;
-    const selectToken = (newToken) => {
-      this.state.clientState.selectedTokenSize = newToken;
-      this.setState(this.state);
-    };
     const sendMessage = (type, value) => {
       this.props.webSocket.send(JSON.stringify({
         type: type,
@@ -239,21 +239,6 @@ const GetTheGold = React.createClass({
 
     const signalReady = () => {
       sendMessage('signal-ready', {username: this.state.clientState.username});
-    };
-
-    const selectTile = (row, column) => {
-      const value = {
-        row: row,
-        column: column,
-        size: this.state.clientState.selectedTokenSize
-      };
-      sendMessage('select-tile', value);
-    };
-    const placePalisade = (palisadeId) => {
-      const value = {
-        palisadeId: palisadeId
-      };
-      sendMessage('place-palisade', value);
     };
 
     if(gameState.currentState === 'state-prologue') {
@@ -269,14 +254,39 @@ const GetTheGold = React.createClass({
       };
       return <PlayerSetup gameState={gameState} clientState={clientState}
           joinGameAsPlayer={joinGameAsPlayer} setRace={setRace} signalReady={signalReady}/>;
-    } else {
-      return (<div>
-        <GameState gameState={gameState}/>
-        <GameBoard gameState={gameState} clientState={clientState}
-            selectTile={selectTile} placePalisade={placePalisade}/>
-        <Reserves gameState={gameState} clientState={clientState} selectToken={selectToken}/>
-      </div>);
     }
+
+    const selectToken = (newToken) => {
+      this.state.clientState.selectedTokenSize = newToken;
+      this.setState(this.state);
+    };
+
+    const selectTile = (row, column) => {
+      const value = {
+        row: row,
+        column: column,
+        size: this.state.clientState.selectedTokenSize
+      };
+      sendMessage('select-tile', value);
+    };
+
+    const placePalisade = (palisadeId) => {
+      const value = {
+        palisadeId: palisadeId
+      };
+      sendMessage('place-palisade', value);
+    };
+
+    const endTurn = () => {
+      sendMessage('end-turn');
+    }
+
+    return (<div>
+      <GameState gameState={gameState} clientState={clientState} endTurn={endTurn}/>
+      <GameBoard gameState={gameState} clientState={clientState}
+          selectTile={selectTile} placePalisade={placePalisade}/>
+      <Reserves gameState={gameState} clientState={clientState} selectToken={selectToken}/>
+    </div>);
   }
 });
 
