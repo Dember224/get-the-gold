@@ -1,8 +1,8 @@
 const assert = require('assert');
-const gameEngine = require('../game-engine.js');
+const GameEngine = require('../game-engine.js');
 
 function getGameEngine() {
-  return gameEngine(gameEngine.getInitialState());
+  return GameEngine(GameEngine.getInitialState());
 }
 
 function getSetupGameEngine() {
@@ -11,6 +11,15 @@ function getSetupGameEngine() {
   gameEngine.setRace('player-1', 'elf'); gameEngine.setRace('player-2', 'mage');
   gameEngine.signalReady('player-1');
   gameEngine.signalReady('player-2');
+  return gameEngine;
+}
+
+function getGameEngineWithFourPlayers() {
+  const gameEngine = getGameEngine();
+  gameEngine.joinGame('player-1');
+  gameEngine.joinGame('player-2');
+  gameEngine.joinGame('player-3');
+  gameEngine.joinGame('player-4');
   return gameEngine;
 }
 
@@ -36,15 +45,6 @@ describe('GameEngine Public Functions', function() {
       assert(palisadeKeys.every(key => gameEngine.getGameState().palisades[key] == 0));
     });
   });
-
-  function getGameEngineWithFourPlayers() {
-    const gameEngine = getGameEngine();
-    gameEngine.joinGame('player-1');
-    gameEngine.joinGame('player-2');
-    gameEngine.joinGame('player-3');
-    gameEngine.joinGame('player-4');
-    return gameEngine;
-  }
 
   describe('joinGame', function() {
     describe('single player', function() {
@@ -128,6 +128,24 @@ describe('GameEngine Public Functions', function() {
     });
   });
 
+  describe('endTurn', function() {
+    it('removes the current player from playerOrder, sets next player as current player', function() {
+      const gameEngine = getSetupGameEngine();
+      gameEngine.endTurn();
+      assert.deepEqual(['player-2'], gameEngine.getGameState().playerOrder);
+      assert.equal('player-2', gameEngine.getGameState().currentPlayer);
+      assert.equal('state-no-move', gameEngine.getGameState().currentState);
+    });
+    it('once all players pass, current player is null and playerOrder is empty, and game is over', function() {
+      const gameEngine = getSetupGameEngine();
+      gameEngine.endTurn();
+      gameEngine.endTurn();
+      assert.deepEqual([], gameEngine.getGameState().playerOrder);
+      assert.equal(null, gameEngine.getGameState().currentPlayer);
+      assert.equal('state-game-over', gameEngine.getGameState().currentState);
+    });
+  });
+
   describe('addToken', function() {
     describe('adding token of value 1 in empty tile 0,0', function() {
       const gameEngine = getSetupGameEngine();
@@ -149,6 +167,46 @@ describe('GameEngine Public Functions', function() {
 });
 
 describe('Game Engine private functions', function() {
+  describe('__isGameOver', function() {
+    it('game not over when first starting', function() {
+      const gameEngine = getSetupGameEngine();
+      assert(!gameEngine.__isGameOver());
+    });
+    it('game is over when all players have passed', function() {
+      const gameEngine = getSetupGameEngine();
+      gameEngine.endTurn();
+      assert(!gameEngine.__isGameOver());
+      gameEngine.endTurn();
+      assert(gameEngine.__isGameOver());
+    });
+    it('game is over when all tiles _AND_ palisades have been used', function() {
+      const gameEngine = getSetupGameEngine();
+
+      // place all palisades
+      const palisades = gameEngine.getGameState().palisades;
+      const nextValidPalisade = () => Object.keys(palisades).find(id => palisades[id] == 0);
+      let id;
+      while(id = nextValidPalisade()) {
+        gameEngine.placePalisade(id);
+      }
+      assert(!gameEngine.__isGameOver());
+
+      // place all tiles
+      const gameState = gameEngine.getGameState();
+      const nextValidArmySize = () => {
+        return gameState.players[gameState.currentPlayer].tokens
+          .findIndex(x => x > 0) + 1
+      };
+      for(let row=0; row<GameEngine.__BOARD_HEIGHT; row++) {
+        for(let column=0; column<GameEngine.__BOARD_WIDTH; column++) {
+          const next = nextValidArmySize();
+          gameEngine.addToken(row, column, next);
+        }
+      }
+      assert(gameEngine.__isGameOver());
+    });
+  });
+
   describe('__getReachableNeighbors', function() {
     it('should return only valid tiles - nothing out of bounds', function() {
       const gameEngine = getGameEngine();

@@ -54,14 +54,15 @@ const getReserveValues = (count) => {
 };
 
 const gameEngine = function(gameState) {
-  // Game is over when all tiles are filled in on the game board - so iterate
-  // through each tile and determine if any of them are empty
+  // Game is over in one of two cases:
+  //   1 - all players have passed
+  //   2 - there are no more valid moves (tiles and palisades)
   const isGameOver = function() {
-    return !gameState.tiles.some((row) => {
+    return (gameState.playerOrder || []).length == 0 || !gameState.tiles.some((row) => {
       return row.some((tile) => {
         return tile.type === undefined;
       });
-    });
+    }) && !Object.keys(gameState.palisades).some(id => gameState.palisades[id] == 0);
   };
 
   const canReach = (a, b, potentialPalisade) => {
@@ -219,6 +220,14 @@ const gameEngine = function(gameState) {
         player: gameState.currentPlayer,
         value: value
       };
+      updateForNextTurn();
+    },
+    endTurn() {
+      if(gameState.currentState == STATE_NO_MOVE) {
+        // then the player has passed their turn, so they can no longer take
+        // any actions
+        gameState.playerOrder = gameState.playerOrder.filter(x => x !== gameState.currentPlayer);
+      }
       updateForNextTurn();
     },
     placePalisade(palisadeId) {

@@ -61,6 +61,8 @@ function getApp(gameStates, gameEngines) {
           gameEngine.setRace(message.value.username, message.value.race);
         } else if(message.type === 'signal-ready') {
           gameEngine.signalReady(message.value.username);
+        } else if(message.type === 'end-turn') {
+          gameEngine.endTurn();
         }
 
         gameStates.storeState(gameId, gameState, function() {
