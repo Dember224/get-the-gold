@@ -1,5 +1,6 @@
 const React = require('react');
 const ReactDom = require('react-dom');
+const cookies = require('js-cookie');
 
 const colorMap = {
   elf: 'blue',
@@ -10,6 +11,8 @@ const colorMap = {
 
 const TILE_HEIGHT = 102;
 const TILE_WIDTH = 102;
+
+const host = location.host;
 
 const Reserves = React.createClass({
   render: function() {
@@ -198,11 +201,13 @@ const PlayerSetup = React.createClass({
     });
 
     const readyButton = playerRace ? <button onClick={this.props.signalReady}>Ready</button> : '';
+    const joinUrl = host + '/game/' + this.props.gameId;
 
     return (<div>
       <div>Name: {clientState.username}</div>
       {raceSelectors}
       {readyButton}
+      <p>Other players can join by going to: <a href={joinUrl}>{joinUrl}</a></p>
     </div>);
   }
 });
@@ -229,9 +234,14 @@ const GetTheGold = React.createClass({
         gameState: getGameState()
       });
     };
+    let username = null;
+    if(this.props.existingUser && this.props.existingUser !== '') {
+      username = this.props.existingUser;
+    }
     return {
       clientState: {
-        selectedTokenSize: 1
+        selectedTokenSize: 1,
+        username: username
       },
       gameState: getGameState()
     }
@@ -267,6 +277,7 @@ const GetTheGold = React.createClass({
         sendMessage('set-race', {username: clientState.username, race: race});
       };
       return <PlayerSetup gameState={gameState} clientState={clientState}
+          gameId={this.props.gameId}
           joinGameAsPlayer={joinGameAsPlayer} setRace={setRace} signalReady={signalReady}/>;
     }
 
@@ -304,8 +315,8 @@ const GetTheGold = React.createClass({
   }
 });
 
-const host = location.host;
 const webSocket = new WebSocket("ws://" + host + "/communication");
 webSocket.onopen = (event) => {
-  ReactDom.render(<GetTheGold webSocket={webSocket}/>, document.getElementById('content'));
+  ReactDom.render(<GetTheGold webSocket={webSocket} gameId={cookies.get('gameId')}
+    existingUser={cookies.get('existing-user')}/>, document.getElementById('content'));
 };

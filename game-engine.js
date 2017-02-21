@@ -173,17 +173,21 @@ const gameEngine = function(gameState) {
     __getReachableNeighbors: getReachableNeighbors,
     __isGameOver: isGameOver,
 
-    getGameState: function() {
+    getPlayerNameForId(playerId) {
+      return Object.keys(gameState.players).find(x => gameState.players[x].playerId == playerId);
+    },
+    getGameState() {
       return gameState;
     },
-    joinGame(username) {
+    joinGame(username, playerId) {
       if(gameState.playerOrder.length == 4) {
         throw 'Unable to join game: Already 4 players';
       }
       gameState.players[username] = {
         race: '',
         tokens: [],
-        ready: false
+        ready: false,
+        playerId: playerId
       };
       gameState.playerOrder.push(username);
     },
@@ -322,11 +326,13 @@ gameEngine.getInitialState = function() {
     players: {
       'player-1': {
         race: 'wizard',
-        tokens: [11, 2, 1, 1, 1]
+        tokens: [11, 2, 1, 1, 1],
+        playerId: "generated-uuid1"
       },
       'player-2': {
         race: 'elf',
-        tokens: [11, 2, 1, 1, 1]
+        tokens: [11, 2, 1, 1, 1],
+        playerId: "generated-uuid2"
       }
     },
     palisades: startingPalisades,

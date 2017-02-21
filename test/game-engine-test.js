@@ -16,10 +16,10 @@ function getSetupGameEngine() {
 
 function getGameEngineWithFourPlayers() {
   const gameEngine = getGameEngine();
-  gameEngine.joinGame('player-1');
-  gameEngine.joinGame('player-2');
-  gameEngine.joinGame('player-3');
-  gameEngine.joinGame('player-4');
+  gameEngine.joinGame('player-1', 'player-one-id');
+  gameEngine.joinGame('player-2', 'player-two-id');
+  gameEngine.joinGame('player-3', 'player-three-id');
+  gameEngine.joinGame('player-4', 'player-four-id');
   return gameEngine;
 }
 
@@ -46,12 +46,24 @@ describe('GameEngine Public Functions', function() {
     });
   });
 
+  describe('getPlayerNameForId', function() {
+    it('should return player id if player exists', function() {
+      const gameEngine = getGameEngine();
+      gameEngine.joinGame('player-one', 'player-id');
+      assert.equal('player-one', gameEngine.getPlayerNameForId('player-id'));
+    });
+    it('should return null if player does not exist', function() {
+      const gameEngine = getGameEngine();
+      assert.equal(null, gameEngine.getPlayerNameForId('player-id'));
+    });
+  });
+
   describe('joinGame', function() {
     describe('single player', function() {
       const gameEngine = getGameEngine();
-      gameEngine.joinGame('player-1');
+      gameEngine.joinGame('player-1', 'player-one-id');
       it('should have player in gameState', function() {
-        const players = {'player-1': {race: "", ready: false, tokens: []}};
+        const players = {'player-1': {playerId: 'player-one-id', race: "", ready: false, tokens: []}};
         assert.deepEqual(players, gameEngine.getGameState().players);
         assert.deepEqual(['player-1'], gameEngine.getGameState().playerOrder);
       });
@@ -61,10 +73,10 @@ describe('GameEngine Public Functions', function() {
     });
     describe('multiple players', function() {
       const playerDataForFourPlayers = {
-        'player-1': {race: "", ready: false, tokens: []},
-        'player-2': {race: "", ready: false, tokens: []},
-        'player-3': {race: "", ready: false, tokens: []},
-        'player-4': {race: "", ready: false, tokens: []}
+        'player-1': {race: "", ready: false, tokens: [], playerId: 'player-one-id'},
+        'player-2': {race: "", ready: false, tokens: [], playerId: 'player-two-id'},
+        'player-3': {race: "", ready: false, tokens: [], playerId: 'player-three-id'},
+        'player-4': {race: "", ready: false, tokens: [], playerId: 'player-four-id'}
       };
       it('should allow four players to join', function() {
         const gameEngine = getGameEngineWithFourPlayers();
@@ -87,9 +99,9 @@ describe('GameEngine Public Functions', function() {
   describe('setRace', function() {
     it('should set race within players dictionary', function() {
       const gameEngine = getGameEngine();
-      gameEngine.joinGame('player-1');
+      gameEngine.joinGame('player-1', 'player-one-id');
       gameEngine.setRace('player-1', 'elf');
-      const players = {'player-1': {race: "elf", ready: false, tokens: []}};
+      const players = {'player-1': {playerId: 'player-one-id', race: "elf", ready: false, tokens: []}};
       assert.deepEqual(players, gameEngine.getGameState().players);
     });
   });

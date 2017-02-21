@@ -24,25 +24,43 @@ function getApp(gameStates, gameEngines) {
 
   app.get('/gameState', function(request, response, next) {
     const gameId = request.cookies.gameId;
-    gameStates.getState(gameId, function(e, one) {
+    gameStates.getState(gameId, function(e, gameState) {
       if(e) { next(e); }
-      response.send(JSON.stringify(one));
+      response.send(JSON.stringify(gameState));
       next();
     });
   });
 
-  app.get('/game/:gameId', function(request, response, next) {
+  app.get('/game/:gameId/:userId?', function(request, response, next) {
     const gameId = request.params.gameId;
-    gameStates.getState(gameId, function(e, one) {
+
+    if(!request.params.userId) {
+      const userId = uuid();
+      response.redirect('/game/' + gameId + '/' + userId);
+      return;
+    }
+
+    const userId = request.params.userId;
+    gameStates.getState(gameId, function(e, gameState) {
       if(e) { next(e); }
       response.cookie('gameId',gameId);
-      response.sendFile(path.join(__dirname + '/client/dist/index.html'));
+      response.cookie('userId',userId);
 
+      // joining the game as an existing user
+      const playerName = gameEngines(gameState).getPlayerNameForId(userId);
+      if(playerName) {
+        response.cookie('existing-user', playerName);
+      } else {
+        response.cookie('existing-user', '');
+      }
+
+      response.sendFile(path.join(__dirname + '/client/dist/index.html'));
     });
   });
 
   app.ws('/communication', function(webSocket, request) {
     const gameId = request.cookies.gameId;
+    const userId = request.cookies.userId;
     webSocket.gameId = gameId;
     webSocket.on('message', function(serializedMessage) {
       console.log("Handling: " + serializedMessage);
@@ -56,7 +74,7 @@ function getApp(gameStates, gameEngines) {
         } else if(message.type === 'place-palisade') {
           gameEngine.placePalisade(message.value.palisadeId);
         } else if(message.type === 'join-game') {
-          gameEngine.joinGame(message.value.username);
+          gameEngine.joinGame(message.value.username, userId);
         } else if(message.type === 'set-race') {
           gameEngine.setRace(message.value.username, message.value.race);
         } else if(message.type === 'signal-ready') {
