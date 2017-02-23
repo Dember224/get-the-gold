@@ -315,7 +315,7 @@ const GetTheGold = React.createClass({
   }
 });
 
-const webSocket = new WebSocket("ws://" + host + "/communication");
+const webSocket = new WebSocket("wss://" + host + "/communication");
 webSocket.onopen = (event) => {
   ReactDom.render(<GetTheGold webSocket={webSocket} gameId={cookies.get('gameId')}
     existingUser={cookies.get('existing-user')}/>, document.getElementById('content'));
