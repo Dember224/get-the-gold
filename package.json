@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha"
+    "postinstall": "gulp",
+    "test": "./node_modules/mocha/bin/mocha",
+    "start": "node index.js"
   },
   "author": "",
   "license": "ISC",
