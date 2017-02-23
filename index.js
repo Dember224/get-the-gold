@@ -97,8 +97,9 @@ function getApp(gameStates, gameEngines) {
     webSocket.send('test-connection');
   });
 
-  app.listen(3000, function () {
-    console.log('Running on port 3000!');
+  const port = process.env.PORT || 3000;
+  app.listen(port, function () {
+    console.log('Running on port: ' + port);
   });
 
   return app;
