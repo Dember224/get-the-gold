@@ -127,14 +127,6 @@ const GameBoard = React.createClass({
   }
 });
 
-function getFromServer(url) {
-  const request = new XMLHttpRequest();
-  request.open("GET", url, false);
-  request.send(null);
-  let result = JSON.parse(request.responseText);
-  return result;
-}
-
 const GameState = React.createClass({
   render: function() {
     const gameState = this.props.gameState;
@@ -223,16 +215,10 @@ const GameOver = React.createClass({
   }
 });
 
-function getGameState() {
-  return getFromServer('/gameState');
-}
-
 const GetTheGold = React.createClass({
   getInitialState: function() {
     this.props.webSocket.onmessage = (event) => {
-      this.setState({
-        gameState: getGameState()
-      });
+      this.props.getGameState((e, gameState) => this.setState({gameState:gameState}));
     };
     let username = null;
     if(this.props.existingUser && this.props.existingUser !== '') {
@@ -243,7 +229,7 @@ const GetTheGold = React.createClass({
         selectedTokenSize: 1,
         username: username
       },
-      gameState: getGameState()
+      gameState: this.props.initialGameState
     }
   },
   render: function() {
@@ -315,10 +301,25 @@ const GetTheGold = React.createClass({
   }
 });
 
+function getGameState(callback) {
+  const request = new XMLHttpRequest();
+  request.open("GET", '/gameState', true);
+  request.onload = function(e) {
+    callback(null, JSON.parse(request.responseText));
+  };
+  request.onerror = function(e) {
+    callback(e);
+  };
+  request.send();
+}
+
 const wsprotocol = location.protocol == 'https:' ? "wss" : "ws";
 webSocket = new WebSocket( wsprotocol + '://' + host + "/communication");
 
 webSocket.onopen = (event) => {
-  ReactDom.render(<GetTheGold webSocket={webSocket} gameId={cookies.get('gameId')}
-    existingUser={cookies.get('existing-user')}/>, document.getElementById('content'));
+  getGameState(function(e, gameState) {
+    ReactDom.render(<GetTheGold webSocket={webSocket} gameId={cookies.get('gameId')}
+      getGameState={getGameState} initialGameState={gameState}
+      existingUser={cookies.get('existing-user')}/>, document.getElementById('content'));
+  });
 };
