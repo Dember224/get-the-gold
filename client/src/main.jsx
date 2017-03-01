@@ -9,6 +9,13 @@ const colorMap = {
   goblin: 'black'
 };
 
+const textColorMap = {
+  elf: 'yellow',
+  mage: 'black',
+  orc: 'cyan',
+  goblin: 'white'
+};
+
 const TILE_HEIGHT = 102;
 const TILE_WIDTH = 102;
 
@@ -27,9 +34,7 @@ const Reserves = React.createClass({
         left: 10 + value*150
       };
       const armyClassName = clientState.selectedTokenSize === value+1 ? "army selected" : "army";
-      const armyStyle = {
-        backgroundColor: color
-      };
+      const armyStyle = {backgroundColor: color, color: textColorMap[playerRace]};
       const selectValue = () => { this.props.selectToken(value+1); };
       return (<div className="unused-token" style={tokenStyle}>
         <div className={armyClassName} style={armyStyle} onClick={selectValue}>
@@ -65,9 +70,7 @@ const GameBoard = React.createClass({
         } else if(tile.type === 'army') {
           const tileRace = gameState.players[tile.player].race;
           const tileColor = colorMap[tileRace];
-          const armyStyle = {
-            backgroundColor: tileColor
-          };
+          const armyStyle = { backgroundColor: tileColor, color: textColorMap[tileRace] };
           if(tile.player === this.props.clientState.username) {
             contents = (<div className="army" style={armyStyle}>
               <p>{tile.value}</p>
@@ -76,9 +79,7 @@ const GameBoard = React.createClass({
             contents = <div className="army" style={armyStyle}/>;
           }
         } else if(isCurrentPlayer && gameState.currentState == 'state-no-move') {
-          const armyStyle = {
-            backgroundColor: unplacedArmyColor
-          };
+          const armyStyle = { backgroundColor: unplacedArmyColor, color: textColorMap[currentRace] };
           contents = <div className="army unplaced" style={armyStyle}/>;
         }
 
