@@ -28,24 +28,57 @@ function getGameEngineWithFourPlayers() {
 
 describe('GameEngine Public Functions', function() {
   describe('getGameState', function() {
-    const gameEngine = getGameEngine();
-    it('should have no players', function() {
-      assert.deepEqual({}, gameEngine.getGameState().players);
-      assert.deepEqual([], gameEngine.getGameState().playerOrder);
+    describe('without any setup', function() {
+      const gameEngine = getGameEngine();
+      it('should have no players', function() {
+        assert.deepEqual({}, gameEngine.getGameState().players);
+        assert.deepEqual([], gameEngine.getGameState().playerOrder);
+      });
+      it('should have null current player', function() {
+        assert.deepEqual(null, gameEngine.getGameState().currentPlayer);
+      });
+      it('should be in prologue state', function() {
+        assert.deepEqual('state-prologue', gameEngine.getGameState().currentState);
+      });
+      it('should have appropriate playerSetup', function() {
+        assert.deepEqual({availableRaces: ['mage', 'elf', 'orc', 'goblin']}, gameEngine.getGameState().playerSetup);
+      });
+      it('should have completely empty data for palisades', function() {
+        const palisadeKeys = Object.keys(gameEngine.getGameState().palisades);
+        assert.equal(67, palisadeKeys.length);
+        assert(palisadeKeys.every(key => gameEngine.getGameState().palisades[key] == 0));
+      });
     });
-    it('should have null current player', function() {
-      assert.deepEqual(null, gameEngine.getGameState().currentPlayer);
-    });
-    it('should be in prologue state', function() {
-      assert.deepEqual('state-prologue', gameEngine.getGameState().currentState);
-    });
-    it('should have appropriate playerSetup', function() {
-      assert.deepEqual({availableRaces: ['mage', 'elf', 'orc', 'goblin']}, gameEngine.getGameState().playerSetup);
-    });
-    it('should have completely empty data for palisades', function() {
-      const palisadeKeys = Object.keys(gameEngine.getGameState().palisades);
-      assert.equal(67, palisadeKeys.length);
-      assert(palisadeKeys.every(key => gameEngine.getGameState().palisades[key] == 0));
+
+    describe('when playing the game', function() {
+      const gameEngine = getGameEngine();
+      gameEngine.joinGame('player-1', 'player-one-id');
+      gameEngine.joinGame('player-2', 'player-two-id');
+      gameEngine.signalReady('player-1');
+      gameEngine.signalReady('player-2');
+      it('should hide player-1 token information from player-2', function() {
+        assert.equal(undefined,gameEngine.getGameState('player-two-id').players['player-1'].tokens);
+      });
+      it('should hide player-2 token information from player-1', function() {
+        assert.equal(undefined,gameEngine.getGameState('player-one-id').players['player-2'].tokens);
+      });
+      it('should not hide player-2 token information from player-2', function() {
+        assert.deepEqual([11,2,1,1,1],gameEngine.getGameState('player-two-id').players['player-2'].tokens);
+      });
+      gameEngine.addToken(0,0,1);
+      it('should show the correct tile information for player-1', function() {
+        assert.deepEqual({
+          type: 'army',
+          player: 'player-1',
+          value: 1
+        }, gameEngine.getGameState('player-one-id').tiles[0][0]);
+      });
+      it('should hide the tile value for player-2', function() {
+        assert.deepEqual({
+          type: 'army',
+          player: 'player-1'
+        }, gameEngine.getGameState('player-two-id').tiles[0][0]);
+      });
     });
   });
 

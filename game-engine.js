@@ -18,6 +18,8 @@ const getReserveValues = (count) => {
   }
 };
 
+const clone = require('clone');
+
 const gameEngine = function(gameState) {
   // Game is over in one of two cases:
   //   1 - all players have passed
@@ -141,8 +143,32 @@ const gameEngine = function(gameState) {
     getPlayerNameForId(playerId) {
       return Object.keys(gameState.players).find(x => gameState.players[x].playerId == playerId);
     },
-    getGameState() {
-      return gameState;
+    getGameState(userId) {
+      if(userId == null || gameState.currentState == STATE_GAME_OVER) { return gameState; }
+
+      // remove hidden information from the game state
+      return ((gameState) => {
+        const players = gameState.players;
+
+        const playerNames = Object.keys(players);
+        const playerName = playerNames.filter(name => players[name].playerId == userId);
+
+        playerNames.map(player => {
+          if(players[player].playerId !== userId) {
+            delete gameState.players[player].tokens;
+          }
+        });
+        const tiles = gameState.tiles;
+        for(var row=0; row<BOARD_HEIGHT; row++) {
+          for(var column=0; column<BOARD_WIDTH; column++) {
+            const tile = tiles[row][column];
+            if(tile.type == 'army' && tile.player != playerName) {
+              delete tile.value;
+            }
+          }
+        }
+        return gameState;
+      })(clone(gameState));
     },
     joinGame(username, playerId) {
       if(gameState.playerOrder.length == 4) {

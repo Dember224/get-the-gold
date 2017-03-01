@@ -26,7 +26,7 @@ function getApp(gameStates, gameEngines) {
     const gameId = request.cookies.gameId;
     gameStates.getState(gameId, function(e, gameState) {
       if(e) { next(e); }
-      response.send(JSON.stringify(gameState));
+      response.send(JSON.stringify(gameEngines(gameState).getGameState(request.cookies.userId)));
       next();
     });
   });
