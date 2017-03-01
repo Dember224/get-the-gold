@@ -8,41 +8,6 @@ const BOARD_HEIGHT = 5;
 
 const TILE_COUNT = BOARD_WIDTH * BOARD_HEIGHT;
 
-const goldTiles = [
-  {
-    position: [0,3],
-    value: 3
-  },
-  {
-    position: [1,1],
-    value: 4
-  },
-  {
-    position: [1,5],
-    value: 4
-  },
-  {
-    position: [1,7],
-    value: 5
-  },
-  {
-    position: [3,0],
-    value: 5
-  },
-  {
-    position: [3,4],
-    value: 6
-  },
-  {
-    position: [4,2],
-    value: 6
-  },
-  {
-    position: [4,6],
-    value: 7
-  }
-];
-
 const getReserveValues = (count) => {
   if(count == 2) {
     return [11, 2, 1, 1, 1];
@@ -124,13 +89,13 @@ const gameEngine = function(gameState) {
   };
 
   const getPlayerScores = () => {
-    const goldTileWinners = goldTiles.map(goldTile => {
+    const goldTileWinners = gameState.goldTiles.map(goldTile => {
       const row = goldTile.position[0], column = goldTile.position[1];
       return getGoldWinnersForTile(row, column);
     });
 
     const playerTiles = {};
-    goldTiles.forEach((goldTile, index) => {
+    gameState.goldTiles.forEach((goldTile, index) => {
       const winners = goldTileWinners[index];
       const numberOfWinners = winners.length;
       const valueForTile = Math.floor(goldTile.value / numberOfWinners);
@@ -286,7 +251,48 @@ const gameEngine = function(gameState) {
 gameEngine.__BOARD_HEIGHT = BOARD_HEIGHT;
 gameEngine.__BOARD_WIDTH = BOARD_WIDTH;
 
-gameEngine.getInitialState = function() {
+const shuffle = require('shuffle-array');
+
+gameEngine.getInitialState = function(options) {
+  options = options || {};
+
+  const goldValues = options.goldValues || shuffle([3,4,4,5,5,6,6,7]);
+  const goldTiles = [
+    {
+      position: [0,3],
+      value: goldValues[0]
+    },
+    {
+      position: [1,1],
+      value: goldValues[1]
+    },
+    {
+      position: [1,5],
+      value: goldValues[2]
+    },
+    {
+      position: [1,7],
+      value: goldValues[3]
+    },
+    {
+      position: [3,0],
+      value: goldValues[4]
+    },
+    {
+      position: [3,4],
+      value: goldValues[5]
+    },
+    {
+      position: [4,2],
+      value: goldValues[6]
+    },
+    {
+      position: [4,6],
+      value: goldValues[7]
+    }
+  ];
+
+
   const startingTiles = new Array(BOARD_HEIGHT);
   for(var i=0; i<BOARD_HEIGHT; i++) {
     startingTiles[i] = new Array(BOARD_WIDTH);
@@ -349,7 +355,8 @@ gameEngine.getInitialState = function() {
     currentState: STATE_PROLOGUE,
     playerSetup: {
       availableRaces: ['mage', 'elf', 'orc', 'goblin']
-    }
+    },
+    goldTiles: goldTiles
   };
 
   return gameState;

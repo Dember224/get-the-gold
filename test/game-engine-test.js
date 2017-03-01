@@ -2,7 +2,10 @@ const assert = require('assert');
 const GameEngine = require('../game-engine.js');
 
 function getGameEngine() {
-  return GameEngine(GameEngine.getInitialState());
+  // by default we want to use a gauranteed setup for gold values
+  return GameEngine(GameEngine.getInitialState({
+    goldValues:[3,4,4,5,5,6,6,7]
+  }));
 }
 
 function getSetupGameEngine() {
