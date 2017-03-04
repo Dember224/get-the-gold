@@ -1,6 +1,5 @@
 const React = require('react');
 const ReactDom = require('react-dom');
-const cookies = require('js-cookie');
 
 const colorMap = {
   elf: 'blue',
@@ -25,7 +24,7 @@ const Reserves = React.createClass({
   render: function() {
     const gameState = this.props.gameState;
     const clientState = this.props.clientState;
-    const playerState = gameState.players[clientState.username];
+    const playerState = gameState.players[clientState.playerId];
     const playerRace = playerState.race;
     const color = colorMap[playerRace];
 
@@ -52,10 +51,10 @@ const GameBoard = React.createClass({
   render: function() {
     const gameState = this.props.gameState;
 
-    const currentRace = gameState.players[gameState.currentPlayer].race;
+    const currentRace = gameState.players[gameState.currentPlayerId].race;
     const unplacedArmyColor = colorMap[currentRace];
 
-    const isCurrentPlayer = this.props.clientState.username == gameState.currentPlayer;
+    const isCurrentPlayer = this.props.clientState.playerId == gameState.currentPlayerId;
 
     const rows = gameState.tiles.map((tiles, row) => {
       const elements = tiles.map((tile, column) => {
@@ -68,10 +67,10 @@ const GameBoard = React.createClass({
         if(tile.type === 'gold') {
           contents = (<div className='gold'>{tile.value}</div>);
         } else if(tile.type === 'army') {
-          const tileRace = gameState.players[tile.player].race;
+          const tileRace = gameState.players[tile.playerId].race;
           const tileColor = colorMap[tileRace];
           const armyStyle = { backgroundColor: tileColor, color: textColorMap[tileRace] };
-          if(tile.player === this.props.clientState.username) {
+          if(tile.playerId === this.props.clientState.playerId) {
             contents = (<div className="army" style={armyStyle}>
               <p>{tile.value}</p>
             </div>);
@@ -132,10 +131,10 @@ const GameState = React.createClass({
   render: function() {
     const gameState = this.props.gameState;
     const clientState = this.props.clientState;
-    const endTurnButton = clientState.username != gameState.currentPlayer ? '' :
+    const endTurnButton = clientState.playerId != gameState.currentPlayerId ? '' :
         (<button onClick={this.props.endTurn}>End Turn</button>);
     return (<div>
-      Current Player: {gameState.currentPlayer}
+      Current Player: {gameState.players[gameState.currentPlayerId].username}
       {endTurnButton}
     </div>);
   }
@@ -144,19 +143,19 @@ const GameState = React.createClass({
 const PlayerSetup = React.createClass({
   getInitialState: function() {
     return {
-      playerName: ''
+      username: ''
     };
   },
   setName: function(event) {
     this.setState({
-      playerName: event.target.value
+      username: event.target.value
     });
   },
   isNameValid: function() {
-    return this.state.playerName != '' && this.state.playerName != null;
+    return this.state.username != '' && this.state.username != null;
   },
   joinGame: function() {
-    this.props.joinGameAsPlayer(this.state.playerName);
+    this.props.joinGameAsPlayer(this.state.username);
   },
   render: function() {
     const gameState = this.props.gameState;
@@ -166,17 +165,18 @@ const PlayerSetup = React.createClass({
       const joinButton =  this.isNameValid() ? <button onClick={this.joinGame}>Join</button> : <div/>;
       return (<div>
         <label htmlFor='name'>Player Name</label>
-        <input name='name' value={this.state.playerName} onChange={this.setName}/>
+        <input name='name' value={this.state.username} onChange={this.setName}/>
         {joinButton}
       </div>);
     }
 
     const usedRaces = {};
-    for(var username in gameState.players) {
-      usedRaces[gameState.players[username].race] = username;
+    for(var playerId in gameState.players) {
+      const player = gameState.players[playerId];
+      usedRaces[player.race] = player.username;
     }
 
-    const playerRace = gameState.players[clientState.username].race;
+    const playerRace = gameState.players[clientState.playerId].race;
     const raceSelectors = gameState.playerSetup.availableRaces.map(race => {
       const tokenStyle = {
         backgroundColor: colorMap[race]
@@ -186,7 +186,7 @@ const PlayerSetup = React.createClass({
         className += ' selected'
       }
       const onClickFn = usedRaces[race] ? null : () => this.props.setRace(race);
-      const text = usedRaces[race] && usedRaces[race] != clientState.username ? race + '[' + usedRaces[race] + ']' : race;
+      const text = usedRaces[race] && usedRaces[race] != clientState.playerId ? race + '[' + usedRaces[race] + ']' : race;
       return (<div onClick={onClickFn} className={className} key={race}>
         <div className='army' style={tokenStyle}/>
         <p>{text}</p>
@@ -209,8 +209,8 @@ const GameOver = React.createClass({
   render() {
     return (<div>
       <p><b>Game Over</b></p>
-      <p>Winner: {this.props.gameState.winner}</p>
-      <p>{this.props.gameState.winner === this.props.clientState.username ?
+      <p>Winner: {this.props.gameState.players[this.props.gameState.winner].username}</p>
+      <p>{this.props.gameState.winner === this.props.clientState.playerId ?
         'Congrats!' : "You have failed your people"}</p>
     </div>);
   }
@@ -221,14 +221,14 @@ const GetTheGold = React.createClass({
     this.props.webSocket.onmessage = (event) => {
       this.props.getGameState((e, gameState) => this.setState({gameState:gameState}));
     };
-    let username = null;
-    if(this.props.existingUser && this.props.existingUser !== '') {
-      username = this.props.existingUser;
+    let playerId = null;
+    if(this.props.existingPlayerId && this.props.existingPlayerId !== '') {
+      playerId = this.props.existingPlayerId;
     }
     return {
       clientState: {
         selectedTokenSize: 1,
-        username: username
+        playerId: playerId,
       },
       gameState: this.props.initialGameState
     }
@@ -249,22 +249,21 @@ const GetTheGold = React.createClass({
     };
 
     const signalReady = () => {
-      sendMessage('signal-ready', {username: this.state.clientState.username});
+      sendMessage('signal-ready', {playerId: this.state.clientState.playerId});
     };
 
     if(gameState.currentState === 'state-prologue') {
       const joinGameAsPlayer = (username) => {
-        sendMessage('join-game', {username: username});
+        sendMessage('join-game', {playerId: this.state.clientState.playerId, username: username});
         clientState.username = username;
         this.setState({
           clientState: clientState
         });
       };
       const setRace = (race) => {
-        sendMessage('set-race', {username: clientState.username, race: race});
+        sendMessage('set-race', {playerId: clientState.playerId, race: race});
       };
-      return <PlayerSetup gameState={gameState} clientState={clientState}
-          gameId={this.props.gameId}
+      return <PlayerSetup gameState={gameState} clientState={clientState} gameId={this.props.gameId}
           joinGameAsPlayer={joinGameAsPlayer} setRace={setRace} signalReady={signalReady}/>;
     }
 
@@ -302,9 +301,16 @@ const GetTheGold = React.createClass({
   }
 });
 
+const wsprotocol = location.protocol == 'https:' ? "wss" : "ws";
+webSocket = new WebSocket( wsprotocol + '://' + host + "/communication");
+
+const gameInforation = location.pathname.match(/\/game\/([^\/]+)\/([^\/]+)\/?$/);
+const gameId = gameInforation[1];
+const playerId = gameInforation[2];
+
 function getGameState(callback) {
   const request = new XMLHttpRequest();
-  request.open("GET", '/gameState', true);
+  request.open("GET", '/gameState/' + gameId + '/' + playerId, true);
   request.onload = function(e) {
     callback(null, JSON.parse(request.responseText));
   };
@@ -314,13 +320,10 @@ function getGameState(callback) {
   request.send();
 }
 
-const wsprotocol = location.protocol == 'https:' ? "wss" : "ws";
-webSocket = new WebSocket( wsprotocol + '://' + host + "/communication");
-
 webSocket.onopen = (event) => {
   getGameState(function(e, gameState) {
-    ReactDom.render(<GetTheGold webSocket={webSocket} gameId={cookies.get('gameId')}
+    ReactDom.render(<GetTheGold webSocket={webSocket} gameId={gameId}
       getGameState={getGameState} initialGameState={gameState}
-      existingUser={cookies.get('existing-user')}/>, document.getElementById('content'));
+      existingPlayerId={playerId}/>, document.getElementById('content'));
   });
 };

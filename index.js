@@ -22,11 +22,12 @@ function getApp(gameStates, gameEngines) {
     });
   });
 
-  app.get('/gameState', function(request, response, next) {
-    const gameId = request.cookies.gameId;
+  app.get('/gameState/:gameId/:playerId', function(request, response, next) {
+    const gameId = request.params.gameId;
+    const playerId = request.params.playerId;
     gameStates.getState(gameId, function(e, gameState) {
       if(e) { next(e); }
-      response.send(JSON.stringify(gameEngines(gameState).getGameState(request.cookies.userId)));
+      response.send(JSON.stringify(gameEngines(gameState).getGameState(playerId)));
       next();
     });
   });
@@ -44,15 +45,7 @@ function getApp(gameStates, gameEngines) {
     gameStates.getState(gameId, function(e, gameState) {
       if(e) { next(e); }
       response.cookie('gameId',gameId);
-      response.cookie('userId',userId);
-
-      // joining the game as an existing user
-      const playerName = gameEngines(gameState).getPlayerNameForId(userId);
-      if(playerName) {
-        response.cookie('existing-user', playerName);
-      } else {
-        response.cookie('existing-user', '');
-      }
+      response.cookie('playerId',userId);
 
       response.sendFile(path.join(__dirname + '/client/dist/index.html'));
     });
@@ -74,11 +67,11 @@ function getApp(gameStates, gameEngines) {
         } else if(message.type === 'place-palisade') {
           gameEngine.placePalisade(message.value.palisadeId);
         } else if(message.type === 'join-game') {
-          gameEngine.joinGame(message.value.username, userId);
+          gameEngine.joinGame(message.value.playerId, message.value.username);
         } else if(message.type === 'set-race') {
-          gameEngine.setRace(message.value.username, message.value.race);
+          gameEngine.setRace(message.value.playerId, message.value.race);
         } else if(message.type === 'signal-ready') {
-          gameEngine.signalReady(message.value.username);
+          gameEngine.signalReady(message.value.playerId);
         } else if(message.type === 'end-turn') {
           gameEngine.endTurn();
         }
