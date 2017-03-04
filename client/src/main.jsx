@@ -157,16 +157,20 @@ const PlayerSetup = React.createClass({
   joinGame: function() {
     this.props.joinGameAsPlayer(this.state.username);
   },
-  render: function() {
+  render() {
+    const internal = this.renderInternal();
+    return <div className="joinForm">{internal}</div>;
+  },
+  renderInternal: function() {
     const gameState = this.props.gameState;
     const clientState = this.props.clientState;
 
     if(clientState.username == null) {
-      const joinButton =  this.isNameValid() ? <button onClick={this.joinGame}>Join</button> : <div/>;
-      return (<div>
+      return (<div className="usernameField">
         <label htmlFor='name'>Player Name</label>
-        <input name='name' value={this.state.username} onChange={this.setName}/>
-        {joinButton}
+        <input maxLength="20" className="usernameField" name='name' value={this.state.username} onChange={this.setName}/>
+        <hr className="usernameField"/>
+        <button className="joinGame" onClick={this.joinGame} disabled={!this.isNameValid()}>Join</button>
       </div>);
     }
 
@@ -322,8 +326,13 @@ function getGameState(callback) {
 
 webSocket.onopen = (event) => {
   getGameState(function(e, gameState) {
-    ReactDom.render(<GetTheGold webSocket={webSocket} gameId={gameId}
-      getGameState={getGameState} initialGameState={gameState}
-      existingPlayerId={playerId}/>, document.getElementById('content'));
+    ReactDom.render(<div>
+      <div className="header"><div className="headerText">Get the Gold</div></div>
+      <div className="body">
+        <GetTheGold webSocket={webSocket} gameId={gameId}
+          getGameState={getGameState} initialGameState={gameState}
+          existingPlayerId={playerId}/>
+      </div>
+    </div>, document.getElementById('content'));
   });
 };

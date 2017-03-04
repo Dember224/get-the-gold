@@ -1,5 +1,81 @@
 body {
-  background-color: lightgray
+  background-color: #C0C0C0;
+  font-family: sans-serif;
+  margin: 0px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.header {
+  margin: 0;
+  padding: 0;
+  background-color: #2d2d2d;
+  display: block;
+  box-sizing: inherit;
+}
+
+.headerText {
+  color: #FFD700;
+  padding: 10px;
+  font-size: 20px;
+}
+
+.body {
+  width: 850px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.joinForm {
+  width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 25px;
+  padding-right: 25px;
+  padding-top: 80px;
+  height: 100%;
+  background-color: #808080;
+}
+
+div.usernameField {
+  width: 50%;
+}
+
+input.usernameField {
+  border-width: 0px;
+  width: 100%;
+  background-color: rgba(0,0,0,0);
+  font-size: 20px;
+  outline: none;
+  margin-top: 15px;
+  color: #FFD700;
+}
+
+hr.usernameField {
+  border-top: none #2d2d2d;
+  border-left: none #2d2d2d;
+  border-right: none #2d2d2d;
+  border-bottom: 1px solid #2d2d2d;
+  box-sizing: content-box;
+  margin: 5px 0px 0px 0px;
+  width: 100%;
+}
+
+button.joinGame {
+  border-style: none;
+  font-size: 20px;
+
+  margin-top: 40px;
+  color: #FFD700;
+  text-align: center;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  background-color: rgba(0,0,0,0);
+}
+
+button.joinGame:hover {
+  background-color: rgba(255,255,255,.2);
 }
 
 .game {
