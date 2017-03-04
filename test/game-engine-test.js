@@ -10,19 +10,19 @@ function getGameEngine() {
 
 function getSetupGameEngine() {
   const gameEngine = getGameEngine();
-  gameEngine.joinGame('player-1'); gameEngine.joinGame('player-2');
-  gameEngine.setRace('player-1', 'elf'); gameEngine.setRace('player-2', 'mage');
-  gameEngine.signalReady('player-1');
-  gameEngine.signalReady('player-2');
+  gameEngine.joinGame('player-1-id'); gameEngine.joinGame('player-2-id');
+  gameEngine.setRace('player-1-id', 'elf'); gameEngine.setRace('player-2-id', 'mage');
+  gameEngine.signalReady('player-1-id');
+  gameEngine.signalReady('player-2-id');
   return gameEngine;
 }
 
 function getGameEngineWithFourPlayers() {
   const gameEngine = getGameEngine();
-  gameEngine.joinGame('player-1', 'player-one-id');
-  gameEngine.joinGame('player-2', 'player-two-id');
-  gameEngine.joinGame('player-3', 'player-three-id');
-  gameEngine.joinGame('player-4', 'player-four-id');
+  gameEngine.joinGame('player-1-id', 'player-1');
+  gameEngine.joinGame('player-2-id', 'player-2');
+  gameEngine.joinGame('player-3-id', 'player-3');
+  gameEngine.joinGame('player-4-id', 'player-4');
   return gameEngine;
 }
 
@@ -35,7 +35,7 @@ describe('GameEngine Public Functions', function() {
         assert.deepEqual([], gameEngine.getGameState().playerOrder);
       });
       it('should have null current player', function() {
-        assert.deepEqual(null, gameEngine.getGameState().currentPlayer);
+        assert.deepEqual(null, gameEngine.getGameState().currentPlayerId);
       });
       it('should be in prologue state', function() {
         assert.deepEqual('state-prologue', gameEngine.getGameState().currentState);
@@ -52,56 +52,44 @@ describe('GameEngine Public Functions', function() {
 
     describe('when playing the game', function() {
       const gameEngine = getGameEngine();
-      gameEngine.joinGame('player-1', 'player-one-id');
-      gameEngine.joinGame('player-2', 'player-two-id');
-      gameEngine.signalReady('player-1');
-      gameEngine.signalReady('player-2');
+      gameEngine.joinGame('player-1-id', 'player-1');
+      gameEngine.joinGame('player-2-id', 'player-2');
+      gameEngine.signalReady('player-1-id');
+      gameEngine.signalReady('player-2-id');
       it('should hide player-1 token information from player-2', function() {
-        assert.equal(undefined,gameEngine.getGameState('player-two-id').players['player-1'].tokens);
+        assert.equal(undefined,gameEngine.getGameState('player-2-id').players['player-1-id'].tokens);
       });
       it('should hide player-2 token information from player-1', function() {
-        assert.equal(undefined,gameEngine.getGameState('player-one-id').players['player-2'].tokens);
+        assert.equal(undefined,gameEngine.getGameState('player-1-id').players['player-2-id'].tokens);
       });
       it('should not hide player-2 token information from player-2', function() {
-        assert.deepEqual([11,2,1,1,1],gameEngine.getGameState('player-two-id').players['player-2'].tokens);
+        assert.deepEqual([11,2,1,1,1],gameEngine.getGameState('player-2-id').players['player-2-id'].tokens);
       });
       gameEngine.addToken(0,0,1);
       it('should show the correct tile information for player-1', function() {
         assert.deepEqual({
           type: 'army',
-          player: 'player-1',
+          playerId: 'player-1-id',
           value: 1
-        }, gameEngine.getGameState('player-one-id').tiles[0][0]);
+        }, gameEngine.getGameState('player-1-id').tiles[0][0]);
       });
       it('should hide the tile value for player-2', function() {
         assert.deepEqual({
           type: 'army',
-          player: 'player-1'
-        }, gameEngine.getGameState('player-two-id').tiles[0][0]);
+          playerId: 'player-1-id'
+        }, gameEngine.getGameState('player-2-id').tiles[0][0]);
       });
-    });
-  });
-
-  describe('getPlayerNameForId', function() {
-    it('should return player id if player exists', function() {
-      const gameEngine = getGameEngine();
-      gameEngine.joinGame('player-one', 'player-id');
-      assert.equal('player-one', gameEngine.getPlayerNameForId('player-id'));
-    });
-    it('should return null if player does not exist', function() {
-      const gameEngine = getGameEngine();
-      assert.equal(null, gameEngine.getPlayerNameForId('player-id'));
     });
   });
 
   describe('joinGame', function() {
     describe('single player', function() {
       const gameEngine = getGameEngine();
-      gameEngine.joinGame('player-1', 'player-one-id');
+      gameEngine.joinGame('player-1-id', 'player-1');
       it('should have player in gameState', function() {
-        const players = {'player-1': {playerId: 'player-one-id', race: "", ready: false, tokens: []}};
+        const players = {'player-1-id': {username: 'player-1', race: "", ready: false, tokens: []}};
         assert.deepEqual(players, gameEngine.getGameState().players);
-        assert.deepEqual(['player-1'], gameEngine.getGameState().playerOrder);
+        assert.deepEqual(['player-1-id'], gameEngine.getGameState().playerOrder);
       });
       it('should still be in prologue state', function() {
         assert.equal('state-prologue', gameEngine.getGameState().currentState);
@@ -109,15 +97,15 @@ describe('GameEngine Public Functions', function() {
     });
     describe('multiple players', function() {
       const playerDataForFourPlayers = {
-        'player-1': {race: "", ready: false, tokens: [], playerId: 'player-one-id'},
-        'player-2': {race: "", ready: false, tokens: [], playerId: 'player-two-id'},
-        'player-3': {race: "", ready: false, tokens: [], playerId: 'player-three-id'},
-        'player-4': {race: "", ready: false, tokens: [], playerId: 'player-four-id'}
+        'player-1-id': {race: "", ready: false, tokens: [], username: 'player-1'},
+        'player-2-id': {race: "", ready: false, tokens: [], username: 'player-2'},
+        'player-3-id': {race: "", ready: false, tokens: [], username: 'player-3'},
+        'player-4-id': {race: "", ready: false, tokens: [], username: 'player-4'}
       };
       it('should allow four players to join', function() {
         const gameEngine = getGameEngineWithFourPlayers();
         assert.deepEqual(playerDataForFourPlayers, gameEngine.getGameState().players);
-        assert.deepEqual(['player-1', 'player-2', 'player-3', 'player-4'], gameEngine.getGameState().playerOrder);
+        assert.deepEqual(['player-1-id', 'player-2-id', 'player-3-id', 'player-4-id'], gameEngine.getGameState().playerOrder);
       });
       it('should still be in prologue state', function() {
         const gameEngine = getGameEngineWithFourPlayers();
@@ -127,7 +115,7 @@ describe('GameEngine Public Functions', function() {
         const gameEngine = getGameEngineWithFourPlayers();
         assert.throws(() => gameEngine.joinGame('player-5'), 'Unable to join game: Already 4 players');
         assert.deepEqual(playerDataForFourPlayers, gameEngine.getGameState().players);
-        assert.deepEqual(['player-1', 'player-2', 'player-3', 'player-4'], gameEngine.getGameState().playerOrder);
+        assert.deepEqual(['player-1-id', 'player-2-id', 'player-3-id', 'player-4-id'], gameEngine.getGameState().playerOrder);
       });
     });
   });
@@ -135,9 +123,9 @@ describe('GameEngine Public Functions', function() {
   describe('setRace', function() {
     it('should set race within players dictionary', function() {
       const gameEngine = getGameEngine();
-      gameEngine.joinGame('player-1', 'player-one-id');
-      gameEngine.setRace('player-1', 'elf');
-      const players = {'player-1': {playerId: 'player-one-id', race: "elf", ready: false, tokens: []}};
+      gameEngine.joinGame('player-1-id', 'player-1');
+      gameEngine.setRace('player-1-id', 'elf');
+      const players = {'player-1-id': {username: 'player-1', race: "elf", ready: false, tokens: []}};
       assert.deepEqual(players, gameEngine.getGameState().players);
     });
   });
@@ -167,7 +155,7 @@ describe('GameEngine Public Functions', function() {
         assert.equal('state-no-move', gameEngine.getGameState().currentState);
       });
       it('should set the first player to join as player one', function() {
-        assert.equal('player-1', gameEngine.getGameState().currentPlayer);
+        assert.equal('player-1', gameEngine.getGameState().currentPlayerId);
       });
       it('should assign the correct number of reserves for each player', function() {
         assert.deepEqual([11, 2, 1, 1, 1], gameEngine.getGameState().players['player-1'].tokens);
@@ -180,8 +168,8 @@ describe('GameEngine Public Functions', function() {
     it('removes the current player from playerOrder, sets next player as current player', function() {
       const gameEngine = getSetupGameEngine();
       gameEngine.endTurn();
-      assert.deepEqual(['player-2'], gameEngine.getGameState().playerOrder);
-      assert.equal('player-2', gameEngine.getGameState().currentPlayer);
+      assert.deepEqual(['player-2-id'], gameEngine.getGameState().playerOrder);
+      assert.equal('player-2-id', gameEngine.getGameState().currentPlayerId);
       assert.equal('state-no-move', gameEngine.getGameState().currentState);
     });
     it('once all players pass, current player is null and playerOrder is empty, and game is over', function() {
@@ -189,7 +177,7 @@ describe('GameEngine Public Functions', function() {
       gameEngine.endTurn();
       gameEngine.endTurn();
       assert.deepEqual([], gameEngine.getGameState().playerOrder);
-      assert.equal(null, gameEngine.getGameState().currentPlayer);
+      assert.equal(null, gameEngine.getGameState().currentPlayerId);
       assert.equal('state-game-over', gameEngine.getGameState().currentState);
     });
   });
@@ -199,16 +187,16 @@ describe('GameEngine Public Functions', function() {
       const gameEngine = getSetupGameEngine();
       gameEngine.addToken(0,0,1);
       it('should have the correct value in tiles[0][0]', function() {
-        assert.deepEqual({type:'army', player:'player-1', value:1}, gameEngine.getGameState().tiles[0][0]);
+        assert.deepEqual({type:'army', playerId:'player-1-id', value:1}, gameEngine.getGameState().tiles[0][0]);
       });
-      it('should set gameState.currentPlayer to the next player in order', function() {
-        assert.equal('player-2', gameEngine.getGameState().currentPlayer);
+      it('should set gameState.currentPlayerId to the next player in order', function() {
+        assert.equal('player-2-id', gameEngine.getGameState().currentPlayerId);
       });
       it('should set gameState.currentState to state-no-move', function() {
         assert.equal('state-no-move', gameEngine.getGameState().currentState);
       });
       it('should decrement the number of tokens for player-1 of value 1', function() {
-        assert.deepEqual([10, 2, 1, 1, 1], gameEngine.getGameState().players['player-1'].tokens);
+        assert.deepEqual([10, 2, 1, 1, 1], gameEngine.getGameState().players['player-1-id'].tokens);
       });
     });
   });
@@ -242,7 +230,7 @@ describe('Game Engine private functions', function() {
       // place all tiles
       const gameState = gameEngine.getGameState();
       const nextValidArmySize = () => {
-        return gameState.players[gameState.currentPlayer].tokens
+        return gameState.players[gameState.currentPlayerId].tokens
           .findIndex(x => x > 0) + 1
       };
       for(let row=0; row<GameEngine.__BOARD_HEIGHT; row++) {
@@ -310,7 +298,7 @@ describe('Game Engine private functions', function() {
       gameEngine.placePalisade('9-10');
       gameEngine.placePalisade('9-17');
 
-      assert.deepEqual(['player-1'], gameEngine.__getGoldWinnersForTile(1,1));
+      assert.deepEqual(['player-1-id'], gameEngine.__getGoldWinnersForTile(1,1));
     });
     it('should return player-1 and player-2 when they have the same value in the territory', function() {
       const gameEngine = getSetupGameEngine();
@@ -323,7 +311,7 @@ describe('Game Engine private functions', function() {
       gameEngine.placePalisade('9-10');
       gameEngine.placePalisade('9-17');
 
-      assert.deepEqual(['player-1', 'player-2'], gameEngine.__getGoldWinnersForTile(1,1));
+      assert.deepEqual(['player-1-id', 'player-2-id'], gameEngine.__getGoldWinnersForTile(1,1));
     });
   });
 
@@ -339,7 +327,7 @@ describe('Game Engine private functions', function() {
       gameEngine.placePalisade('9-10');
       gameEngine.placePalisade('9-17');
 
-      assert.deepEqual({'player-1': 4}, gameEngine.__getPlayerScores());
+      assert.deepEqual({'player-1-id': 4}, gameEngine.__getPlayerScores());
     });
     it('should return both players as having 2 when they have the same army size in a territory', function() {
       const gameEngine = getSetupGameEngine();
@@ -352,7 +340,7 @@ describe('Game Engine private functions', function() {
       gameEngine.placePalisade('9-10');
       gameEngine.placePalisade('9-17');
 
-      assert.deepEqual({'player-1': 2, 'player-2': 2}, gameEngine.__getPlayerScores());
+      assert.deepEqual({'player-1-id': 2, 'player-2-id': 2}, gameEngine.__getPlayerScores());
     });
   });
 
@@ -368,7 +356,7 @@ describe('Game Engine private functions', function() {
       gameEngine.placePalisade('9-10');
       gameEngine.placePalisade('9-17');
 
-      assert.equal('player-1', gameEngine.__determineWinner());
+      assert.equal('player-1-id', gameEngine.__determineWinner());
     });
   });
 });

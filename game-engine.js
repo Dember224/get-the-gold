@@ -84,10 +84,10 @@ const gameEngine = function(gameState) {
     const playerValues = {};
     let max = 0;
     tiles.filter(tile => tile.type == 'army').forEach(tile => {
-      playerValues[tile.player] = (playerValues[tile.player] || 0) + tile.value;
-      max = Math.max(playerValues[tile.player], max);
+      playerValues[tile.playerId] = (playerValues[tile.playerId] || 0) + tile.value;
+      max = Math.max(playerValues[tile.playerId], max);
     });
-    return Object.keys(playerValues).filter(player => playerValues[player] == max);
+    return Object.keys(playerValues).filter(playerId => playerValues[playerId] == max);
   };
 
   const getPlayerScores = () => {
@@ -122,8 +122,8 @@ const gameEngine = function(gameState) {
   };
 
   const updateForNextTurn = function() {
-    const index = gameState.playerOrder.indexOf(gameState.currentPlayer);
-    gameState.currentPlayer = gameState.playerOrder[(index + 1) % gameState.playerOrder.length];
+    const index = gameState.playerOrder.indexOf(gameState.currentPlayerId);
+    gameState.currentPlayerId = gameState.playerOrder[(index + 1) % gameState.playerOrder.length];
     if(isGameOver()) {
       gameState.currentState = STATE_GAME_OVER;
       gameState.winner = determineWinner();
@@ -140,29 +140,23 @@ const gameEngine = function(gameState) {
     __getReachableNeighbors: getReachableNeighbors,
     __isGameOver: isGameOver,
 
-    getPlayerNameForId(playerId) {
-      return Object.keys(gameState.players).find(x => gameState.players[x].playerId == playerId);
-    },
-    getGameState(userId) {
-      if(userId == null || gameState.currentState == STATE_GAME_OVER) { return gameState; }
+    getGameState(playerId) {
+      if(playerId == null || gameState.currentState == STATE_GAME_OVER) { return gameState; }
 
       // remove hidden information from the game state
       return ((gameState) => {
         const players = gameState.players;
 
-        const playerNames = Object.keys(players);
-        const playerName = playerNames.filter(name => players[name].playerId == userId);
-
-        playerNames.map(player => {
-          if(players[player].playerId !== userId) {
-            delete gameState.players[player].tokens;
+        Object.keys(players).map(id => {
+          if(playerId !== id) {
+            delete gameState.players[id].tokens;
           }
         });
         const tiles = gameState.tiles;
         for(var row=0; row<BOARD_HEIGHT; row++) {
           for(var column=0; column<BOARD_WIDTH; column++) {
             const tile = tiles[row][column];
-            if(tile.type == 'army' && tile.player != playerName) {
+            if(tile.type == 'army' && tile.playerId !== playerId) {
               delete tile.value;
             }
           }
@@ -170,39 +164,39 @@ const gameEngine = function(gameState) {
         return gameState;
       })(clone(gameState));
     },
-    joinGame(username, playerId) {
+    joinGame(playerId, username) {
       if(gameState.playerOrder.length == 4) {
         throw 'Unable to join game: Already 4 players';
       }
-      gameState.players[username] = {
+      gameState.players[playerId] = {
         race: '',
         tokens: [],
         ready: false,
-        playerId: playerId
+        username: username
       };
-      gameState.playerOrder.push(username);
+      gameState.playerOrder.push(playerId);
     },
-    signalReady(username) {
-      gameState.players[username].ready = true;
-      var count = 0;
-      var ready = true;
-      for(var player in gameState.players) {
+    signalReady(playerId) {
+      gameState.players[playerId].ready = true;
+      let count = 0;
+      let ready = true;
+      for(let playerId in gameState.players) {
         count ++;
-        ready = ready && gameState.players[player].ready;
+        ready = ready && gameState.players[playerId].ready;
       }
       if(ready && count > 1) {
         gameState.currentState = STATE_NO_MOVE;
-        gameState.currentPlayer = gameState.playerOrder[0];
+        gameState.currentPlayerId = gameState.playerOrder[0];
         for(var player in gameState.players) {
           gameState.players[player].tokens = getReserveValues(count);
         }
       }
     },
-    setRace(username, race) {
-      gameState.players[username].race = race;
+    setRace(playerId, race) {
+      gameState.players[playerId].race = race;
     },
     addToken(row, column, value) {
-      const playerState = gameState.players[gameState.currentPlayer];
+      const playerState = gameState.players[gameState.currentPlayerId];
       if(playerState.tokens[value-1] === 0) {
         return;
       }
@@ -212,7 +206,7 @@ const gameEngine = function(gameState) {
       playerState.tokens[value-1] --;
       gameState.tiles[row][column] = {
         type: 'army',
-        player: gameState.currentPlayer,
+        playerId: gameState.currentPlayerId,
         value: value
       };
       updateForNextTurn();
@@ -221,7 +215,7 @@ const gameEngine = function(gameState) {
       if(gameState.currentState == STATE_NO_MOVE) {
         // then the player has passed their turn, so they can no longer take
         // any actions
-        gameState.playerOrder = gameState.playerOrder.filter(x => x !== gameState.currentPlayer);
+        gameState.playerOrder = gameState.playerOrder.filter(x => x !== gameState.currentPlayerId);
       }
       updateForNextTurn();
     },
@@ -356,20 +350,20 @@ gameEngine.getInitialState = function(options) {
   // Server Game Logic
   /*var gameState = {
     players: {
-      'player-1': {
+      'generated-uuid1': {
         race: 'wizard',
         tokens: [11, 2, 1, 1, 1],
-        playerId: "generated-uuid1"
+        username: "player-1"
       },
-      'player-2': {
+      'generated-uuid2': {
         race: 'elf',
         tokens: [11, 2, 1, 1, 1],
-        playerId: "generated-uuid2"
+        username: "player-2"
       }
     },
     palisades: startingPalisades,
     tiles: startingTiles,
-    currentPlayer: 'player-1',
+    currentPlayerId: 'player-1',
     currentState: STATE_PROLOGUE
   };*/
   var gameState = {
@@ -377,7 +371,7 @@ gameEngine.getInitialState = function(options) {
     playerOrder: [],
     palisades: startingPalisades,
     tiles: startingTiles,
-    currentPlayer: null,
+    currentPlayerId: null,
     currentState: STATE_PROLOGUE,
     playerSetup: {
       availableRaces: ['mage', 'elf', 'orc', 'goblin']
