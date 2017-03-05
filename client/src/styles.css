@@ -62,10 +62,13 @@ hr.usernameField {
 }
 
 button.joinGame {
+  margin-top: 40px;
+}
+
+button {
   border-style: none;
   font-size: 20px;
 
-  margin-top: 40px;
   padding: 5px 15px 5px 15px;
   color: #FFD700;
   text-align: center;
@@ -75,8 +78,20 @@ button.joinGame {
   background-color: #2d2d2d;
 }
 
-button.joinGame:hover {
+button:hover {
   background-color: rgba(255,255,255,.2);
+}
+
+button.endTurn {
+  position: absolute;
+  right: 0px;
+}
+
+div.controlBar {
+  position: absolute;
+  width: 816px;
+  height: 30px;
+  margin-top: 5px;
 }
 
 .game {
@@ -84,7 +99,8 @@ button.joinGame:hover {
 }
 
 .player-area {
-  position: relative
+  position: absolute;
+  margin-top: 545px;
 }
 
 .unused-token {
@@ -124,12 +140,10 @@ button.joinGame:hover {
 }
 
 .board {
-  position: relative;
+  position: absolute;
   height: 510;
   width: 816;
-  border-style: solid;
-  border-width: 1px;
-  border-color: gray;
+  margin-top: 40px;
 }
 
 .tile {

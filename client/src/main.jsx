@@ -132,8 +132,8 @@ const GameState = React.createClass({
     const gameState = this.props.gameState;
     const clientState = this.props.clientState;
     const endTurnButton = clientState.playerId != gameState.currentPlayerId ? '' :
-        (<button onClick={this.props.endTurn}>End Turn</button>);
-    return (<div>
+        (<button className="endTurn" onClick={this.props.endTurn}>End Turn</button>);
+    return (<div className="controlBar">
       Current Player: {gameState.players[gameState.currentPlayerId].username}
       {endTurnButton}
     </div>);
