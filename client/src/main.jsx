@@ -51,9 +51,8 @@ const GameBoard = React.createClass({
   render: function() {
     const gameState = this.props.gameState;
 
-    const currentRace = gameState.players[gameState.currentPlayerId].race;
-    const unplacedArmyColor = colorMap[currentRace];
-
+    const currentRace = gameState.currentPlayerId && gameState.players[gameState.currentPlayerId].race;
+    const unplacedArmyColor = currentRace && colorMap[currentRace];
     const isCurrentPlayer = this.props.clientState.playerId == gameState.currentPlayerId;
 
     const rows = gameState.tiles.map((tiles, row) => {
@@ -70,7 +69,7 @@ const GameBoard = React.createClass({
           const tileRace = gameState.players[tile.playerId].race;
           const tileColor = colorMap[tileRace];
           const armyStyle = { backgroundColor: tileColor, color: textColorMap[tileRace] };
-          if(tile.playerId === this.props.clientState.playerId) {
+          if(tile.value) {
             contents = (<div className="army" style={armyStyle}>
               <p>{tile.value}</p>
             </div>);
@@ -242,7 +241,10 @@ const GetTheGold = React.createClass({
     const clientState = this.state.clientState;
 
     if(gameState.currentState === 'state-game-over') {
-      return <GameOver gameState={gameState} clientState={clientState}/>;
+      return (<div>
+        <GameOver gameState={gameState} clientState={clientState} />
+        <GameBoard gameState={gameState} clientState={clientState} />
+      </div>);
     }
 
     const sendMessage = (type, value) => {
