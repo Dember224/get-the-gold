@@ -69,7 +69,7 @@ const GameBoard = React.createClass({
           const tileRace = gameState.players[tile.playerId].race;
           const tileColor = colorMap[tileRace];
           const armyStyle = { backgroundColor: tileColor, color: textColorMap[tileRace] };
-          if(tile.playerId === this.props.clientState.playerId) {
+          if(tile.value) {
             contents = (<div className="army" style={armyStyle}>
               <p>{tile.value}</p>
             </div>);
