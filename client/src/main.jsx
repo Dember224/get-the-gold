@@ -52,7 +52,7 @@ const GameBoard = React.createClass({
     const gameState = this.props.gameState;
 
     const currentRace = gameState.currentPlayerId && gameState.players[gameState.currentPlayerId].race;
-    const unplacedArmyColor = currentRace && colorMap[currentRace];
+    const unplacedArmyColor = colorMap[currentRace];
     const isCurrentPlayer = this.props.clientState.playerId == gameState.currentPlayerId;
 
     const rows = gameState.tiles.map((tiles, row) => {
@@ -69,7 +69,7 @@ const GameBoard = React.createClass({
           const tileRace = gameState.players[tile.playerId].race;
           const tileColor = colorMap[tileRace];
           const armyStyle = { backgroundColor: tileColor, color: textColorMap[tileRace] };
-          if(tile.value) {
+          if(tile.playerId === this.props.clientState.playerId) {
             contents = (<div className="army" style={armyStyle}>
               <p>{tile.value}</p>
             </div>);
@@ -197,13 +197,13 @@ const PlayerSetup = React.createClass({
     });
 
     const readyButton = playerRace ? <button onClick={this.props.signalReady}>Ready</button> : '';
-    const joinUrl = host + '/game/' + this.props.gameId;
+    const joinUrl = location.protocol + "//" + host + '/game/' + this.props.gameId;
 
     return (<div>
       <div>Name: {clientState.username}</div>
       {raceSelectors}
       {readyButton}
-      <p>Other players can join by going to: <a href={joinUrl}>{joinUrl}</a></p>
+      <p>Other players can join by going to: <a target="_blank" href={joinUrl}>{joinUrl}</a></p>
     </div>);
   }
 });
@@ -220,23 +220,55 @@ const GameOver = React.createClass({
 });
 
 const GetTheGold = React.createClass({
-  getInitialState: function() {
-    this.props.webSocket.onmessage = (event) => {
-      this.props.getGameState((e, gameState) => this.setState({gameState:gameState}));
+  getInitialState() {
+    const wsprotocol = location.protocol == 'https:' ? "wss" : "ws";
+    let webSocket;
+
+    const setupWebsocket = () => {
+      webSocket = new WebSocket( wsprotocol + '://' + host + "/communication");
+
+      webSocket.onopen = (event) => {
+        getGameState((e, gameState) => this.setState({gameState: gameState, loading: false}));
+      };
+
+      webSocket.onmessage = (event) => {
+        this.props.getGameState((e, gameState) => this.setState({gameState:gameState}));
+      };
+
+      webSocket.onclose = (event) => {
+        console.log('Reloading websocket');
+        setTimeout(setupWebsocket, 100);
+      };
     };
+
+    setupWebsocket();
+
+    this.sendMessage = (type, value) => {
+      webSocket.send(JSON.stringify({
+        type: type,
+        value: value
+      }));
+    };
+
     let playerId = null;
     if(this.props.existingPlayerId && this.props.existingPlayerId !== '') {
       playerId = this.props.existingPlayerId;
     }
+
     return {
       clientState: {
         selectedTokenSize: 1,
-        playerId: playerId,
+        playerId: playerId
       },
-      gameState: this.props.initialGameState
-    }
+      loading: true,
+      gameState: null
+    };
   },
   render: function() {
+    if(this.state.loading) {
+      return (<div>Loading...</div>);
+    }
+
     const gameState = this.state.gameState;
     const clientState = this.state.clientState;
 
@@ -247,27 +279,20 @@ const GetTheGold = React.createClass({
       </div>);
     }
 
-    const sendMessage = (type, value) => {
-      this.props.webSocket.send(JSON.stringify({
-        type: type,
-        value: value
-      }));
-    };
-
     const signalReady = () => {
-      sendMessage('signal-ready', {playerId: this.state.clientState.playerId});
+      this.sendMessage('signal-ready', {playerId: this.state.clientState.playerId});
     };
 
     if(gameState.currentState === 'state-prologue') {
       const joinGameAsPlayer = (username) => {
-        sendMessage('join-game', {playerId: this.state.clientState.playerId, username: username});
+        this.sendMessage('join-game', {playerId: this.state.clientState.playerId, username: username});
         clientState.username = username;
         this.setState({
           clientState: clientState
         });
       };
       const setRace = (race) => {
-        sendMessage('set-race', {playerId: clientState.playerId, race: race});
+        this.sendMessage('set-race', {playerId: clientState.playerId, race: race});
       };
       return <PlayerSetup gameState={gameState} clientState={clientState} gameId={this.props.gameId}
           joinGameAsPlayer={joinGameAsPlayer} setRace={setRace} signalReady={signalReady}/>;
@@ -284,18 +309,18 @@ const GetTheGold = React.createClass({
         column: column,
         size: this.state.clientState.selectedTokenSize
       };
-      sendMessage('select-tile', value);
+      this.sendMessage('select-tile', value);
     };
 
     const placePalisade = (palisadeId) => {
       const value = {
         palisadeId: palisadeId
       };
-      sendMessage('place-palisade', value);
+      this.sendMessage('place-palisade', value);
     };
 
     const endTurn = () => {
-      sendMessage('end-turn');
+      this.sendMessage('end-turn');
     }
 
     return (<div>
@@ -306,9 +331,6 @@ const GetTheGold = React.createClass({
     </div>);
   }
 });
-
-const wsprotocol = location.protocol == 'https:' ? "wss" : "ws";
-webSocket = new WebSocket( wsprotocol + '://' + host + "/communication");
 
 const gameInforation = location.pathname.match(/\/game\/([^\/]+)\/([^\/]+)\/?$/);
 const gameId = gameInforation[1];
@@ -326,15 +348,9 @@ function getGameState(callback) {
   request.send();
 }
 
-webSocket.onopen = (event) => {
-  getGameState(function(e, gameState) {
-    ReactDom.render(<div>
-      <div className="header"><div className="headerText">Get the Gold</div></div>
-      <div className="body">
-        <GetTheGold webSocket={webSocket} gameId={gameId}
-          getGameState={getGameState} initialGameState={gameState}
-          existingPlayerId={playerId}/>
-      </div>
-    </div>, document.getElementById('content'));
-  });
-};
+ReactDom.render(<div>
+  <div className="header"><div className="headerText">Get the Gold</div></div>
+  <div className="body">
+    <GetTheGold gameId={gameId} getGameState={getGameState} existingPlayerId={playerId}/>
+  </div>
+</div>, document.getElementById('content'));
