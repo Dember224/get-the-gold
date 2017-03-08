@@ -250,15 +250,10 @@ const GetTheGold = React.createClass({
       }));
     };
 
-    let playerId = null;
-    if(this.props.existingPlayerId && this.props.existingPlayerId !== '') {
-      playerId = this.props.existingPlayerId;
-    }
-
     return {
       clientState: {
         selectedTokenSize: 1,
-        playerId: playerId
+        playerId: this.props.playerId
       },
       loading: true,
       gameState: null
@@ -351,6 +346,6 @@ function getGameState(callback) {
 ReactDom.render(<div>
   <div className="header"><div className="headerText">Get the Gold</div></div>
   <div className="body">
-    <GetTheGold gameId={gameId} getGameState={getGameState} existingPlayerId={playerId}/>
+    <GetTheGold gameId={gameId} getGameState={getGameState} playerId={playerId}/>
   </div>
 </div>, document.getElementById('content'));
