@@ -6,7 +6,7 @@ function getApp(gameStates, gameEngines) {
   const app = express();
   const expressWs = require('express-ws')(app);
 
-  const uuid = require('uuid');
+  const uuid = require('uuidv4');
 
   app.use(express.static('client/dist/static'));
   app.use(require('cookie-parser')());

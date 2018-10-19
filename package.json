@@ -29,6 +29,7 @@
     "react-dom": "^15.4.2",
     "reactify": "^1.1.1",
     "shuffle-array": "^1.0.1",
+    "uuidv4": "^2.0.0",
     "vinyl-source-stream": "^1.1.0"
   }
 }
